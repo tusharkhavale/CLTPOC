@@ -9,6 +9,6 @@ public class SelectGameScreen : MonoBehaviour {
 	/// </summary>
 	public void OnClickGame()
 	{
-		
+		GameController.gameController.uiManager.UIScreenTransition (EScreen.Game);
 	}
 }
