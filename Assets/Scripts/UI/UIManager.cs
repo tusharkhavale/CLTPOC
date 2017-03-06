@@ -48,7 +48,7 @@ public class UIManager : MonoBehaviour {
 	/// <param name="screen">Screen.</param>
 	public void UIScreenTransition(EScreen screen)
 	{
-		UnloadScreen (screen);
+		UnloadScreen (CurrScreen);
 		loadScreen (screen);
 	}
 
@@ -67,6 +67,7 @@ public class UIManager : MonoBehaviour {
 
 			case EScreen.NameEntry:
 				page = transform.FindChild ("NameEntryScreen");
+											 
 				break;
 
 			case EScreen.SelectGame:
@@ -77,9 +78,8 @@ public class UIManager : MonoBehaviour {
 				page = transform.FindChild ("Game");
 				break;
 		}
-
 		if(page != null)
-			Destroy(page);
+			Destroy(page.gameObject);
 			
 	}
 
@@ -119,6 +119,7 @@ public class UIManager : MonoBehaviour {
 		{
 			page = Instantiate (go) as GameObject;
 			page.transform.SetParent (transform,false);	
+			page.name = page.name.Replace ("(Clone)", "");
 		}
 
 	}
