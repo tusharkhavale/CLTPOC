@@ -1,74 +1,169 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Audio;
+using System;
+using System.Collections.Generic;
+
+[RequireComponent(typeof(AudioSource))]
+class Peak
+{
+	public float amplitude;
+	public int index;
+
+	public Peak()
+	{
+		amplitude = 0f;
+		index = -1;
+	}
+
+	public Peak(float _frequency, int _index)
+	{
+		amplitude = _frequency;
+		index = _index;
+	}
+}
+
+class AmpComparer : IComparer<Peak>
+{
+	public int Compare(Peak a, Peak b)
+	{
+		return 0 - a.amplitude.CompareTo(b.amplitude);
+	}
+}
+
+class IndexComparer : IComparer<Peak>
+{
+	public int Compare(Peak a, Peak b)
+	{
+		return a.index.CompareTo(b.index);
+	}
+}
 
 public class MicrophoneInput : MonoBehaviour
 {
-	public float RmsValue;
-	public float DbValue;
-	public float PitchValue;
-	public Text pitch;
-	public Text samplingFrequency;
 
-	private const int QSamples = 1024;
-	private const float RefValue = 0.1f;
-	private const float Threshold = 0.02f;
+	public float rmsValue;
+	public float dbValue;
+	public float pitchValue;
 
-	float[] _samples;
-	private float[] _spectrum;
-	private float _fSample;
+	public int qSamples = 1024;
+	public int binSize = 2048; // you can change this up, I originally used 8192 for better resolution, but I stuck with 1024 because it was slow-performing on the phone
+	public float refValue = 0.1f;
+	public float threshold = 0.01f;
+
+
+	private List<Peak> peaks = new List<Peak>();
+	float[] samples;
+	float[] spectrum;
+	int samplerate;
+
+	public Text display; // drag a Text object here to display values
+	public bool mute = true;
+	public AudioMixer masterMixer; // drag an Audio Mixer here in the inspector
+
 
 	void Start()
 	{
-		_samples = new float[QSamples];
-		_spectrum = new float[QSamples];
-		_fSample = AudioSettings.outputSampleRate;
-		samplingFrequency.text = "OSR : " + _fSample;
-		GetComponent<AudioSource>().clip = Microphone.Start(null, true, 10, (int)_fSample);
+		samples = new float[qSamples];
+		spectrum = new float[binSize];
+		samplerate = AudioSettings.outputSampleRate;
+
+		// starts the Microphone and attaches it to the AudioSource
+		GetComponent<AudioSource>().clip = Microphone.Start(null, true, 10, samplerate);
 		GetComponent<AudioSource>().loop = true; // Set the AudioClip to loop
-		while (!(Microphone.GetPosition(null) > 0)){} // Wait until the recording has started
+		while (!(Microphone.GetPosition(null) > 0)) { } // Wait until the recording has started
 		GetComponent<AudioSource>().Play();
-
-
+		// Mutes the mixer. You have to expose the Volume element of your mixer for this to work. I named mine "masterVolume".
+		masterMixer.SetFloat("masterVolume", -80f);
 	}
 
 	void Update()
 	{
 		AnalyzeSound();
+		if (display != null)
+		{
+			display.text = "RMS: " + rmsValue.ToString("F2") +
+				" (" + dbValue.ToString("F1") + " dB)\n" +
+				"Pitch: " + pitchValue.ToString("F0") + " Hz";
+		}
 	}
 
 	void AnalyzeSound()
 	{
-//		GetComponent<AudioSource>().GetOutputData(_samples, 0); // fill array with samples
-		int i;
-//		float sum = 0;
-//		for (i = 0; i < QSamples; i++)
+//		float[] samples = new float[qSamples];
+//		GetComponent<AudioSource>().GetOutputData(samples, 0); // fill array with samples
+		int i = 0;
+//		float sum = 0f;
+//		for (i = 0; i < qSamples; i++)
 //		{
-//			sum += _samples[i] * _samples[i]; // sum squared samples
+//			sum += samples[i] * samples[i]; // sum squared samples
 //		}
-//		RmsValue = Mathf.Sqrt(sum / QSamples); // rms = square root of average
-//		DbValue = 20 * Mathf.Log10(RmsValue / RefValue); // calculate dB
-//		if (DbValue < -160) DbValue = -160; // clamp it to -160dB min
-//		// get sound spectrum
-		GetComponent<AudioSource>().GetSpectrumData(_spectrum, 0, FFTWindow.BlackmanHarris);
-		AudioVisualizer.GetInstance ().UpdateVisualizer (_spectrum);
-		float maxV = 0;
-		var maxN = 0;
-		for (i = 0; i < QSamples; i++)
-		{ // find max 
-			if (!(_spectrum[i] > maxV) || !(_spectrum[i] > Threshold))
-				continue;
+//		rmsValue = Mathf.Sqrt(sum / qSamples); // rms = square root of average
+//		dbValue = 20 * Mathf.Log10(rmsValue / refValue); // calculate dB
+//		if (dbValue < -160) dbValue = -160; // clamp it to -160dB min
 
-			maxV = _spectrum[i];
-			maxN = i; // maxN is the index of max
+		// get sound spectrum
+		GetComponent<AudioSource>().GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+//		AudioVisualizer.GetInstance ().UpdateVisualizer (spectrum);
+		float maxV = 0f;
+		for (i = 0; i < binSize; i++)
+		{ // find max
+			if (spectrum[i] > maxV && spectrum[i] > threshold)
+			{
+				peaks.Add(new Peak(spectrum[i], i));
+				if (peaks.Count > 5)
+				{ // get the 5 peaks in the sample with the highest amplitudes
+					peaks.Sort(new AmpComparer()); // sort peak amplitudes from highest to lowest
+					//peaks.Remove (peaks [5]); // remove peak with the lowest amplitude
+				}
+			}
 		}
-		float freqN = maxN; // pass the index to a float variable
-		if (maxN > 0 && maxN < QSamples - 1)
-		{ // interpolate index using neighbours
-			var dL = _spectrum[maxN - 1] / _spectrum[maxN];
-			var dR = _spectrum[maxN + 1] / _spectrum[maxN];
-			freqN += 0.5f * (dR * dR - dL * dL);
+		float freqN = 0f;
+
+		if (peaks.Count > 0)
+		{
+			//peaks.Sort (new IndexComparer ()); // sort indices in ascending order
+			maxV = peaks[0].amplitude;
+			int maxN = peaks[0].index;
+			freqN = maxN; // pass the index to a float variable
+			if (maxN > 0 && maxN < binSize - 1)
+			{ // interpolate index using neighbours
+				var dL = spectrum[maxN - 1] / spectrum[maxN];
+				var dR = spectrum[maxN + 1] / spectrum[maxN];
+				Debug.Log("freq 1 : "+freqN);
+				freqN += 0.5f * (dR * dR - dL * dL);
+				Debug.Log("freq 2 : "+freqN);
+			}
+
 		}
-		PitchValue = freqN * (_fSample / 2) / QSamples; // convert index to frequency
-		pitch.text = ""+PitchValue;
+
+		if (peaks.Count > 0)
+			ChakraLongTone.GetInstance ().UpdateChakras (GetHarmoicsAmplitude (spectrum, peaks [0].index, 4, 7));
+		else
+			ChakraLongTone.GetInstance ().NormalizeChakras ();
+			
+			
+			pitchValue = freqN * (samplerate / 2f) / binSize; // convert index to frequency
+			peaks.Clear();
+	}
+
+	float[] GetHarmoicsAmplitude(float[] spectrum,int peakBin, int windowHalfLen, int harmonic)
+	{
+		float[] harmonicsData = new float[harmonic];
+		for (int i = 1; i <= harmonicsData.Length; i++) 
+		{
+			double sumOfSquares = 0.0;
+			int binValue = peakBin * i; 
+			for (int bin = binValue-windowHalfLen; bin <= binValue+windowHalfLen; bin++)
+			{
+				if (bin < spectrum.Length && bin > 0) 
+				{
+					sumOfSquares += spectrum[bin] * spectrum[bin];
+				}
+			}
+			harmonicsData[i-1] = Mathf.Sqrt((float)sumOfSquares);	
+		}
+		return harmonicsData;
+
 	}
 }
