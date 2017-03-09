@@ -13,7 +13,6 @@ public class GameController : MonoBehaviour {
 	[HideInInspector]
 	public SceneManager sceneManager;
 
-
 	void Awake()
 	{
 		gameController = this;

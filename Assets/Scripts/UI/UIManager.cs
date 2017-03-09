@@ -17,6 +17,8 @@ public class UIManager : MonoBehaviour {
 	private static UIManager instance;
 	private EScreen currScreen = EScreen.Title;
 
+	public GameObject analytics;
+
 	public static UIManager GetInstance()
 	{
 		if (instance != null) 
@@ -130,8 +132,6 @@ public class UIManager : MonoBehaviour {
 	{
 		transform.FindChild ("LoadingScreen").gameObject.SetActive(true);
 	}
-
-
 
 
 }

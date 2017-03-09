@@ -11,4 +11,14 @@ public class SelectGameScreen : MonoBehaviour {
 	{
 		GameController.gameController.uiManager.UIScreenTransition (EScreen.Game);
 	}
+
+	/// <summary>
+	/// Callback for Analytics click.
+	/// </summary>
+	public void OnClickAnalytics()
+	{
+		transform.FindChild ("Analytics").gameObject.SetActive (true);
+	}
+
+
 }
