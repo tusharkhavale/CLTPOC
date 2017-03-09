@@ -97,7 +97,6 @@ namespace UnityPitchControl.Input {
 				double sumOfSquares = 0.0;
 				int binValue = peakBin * i; 
 
-				Debug.Log (i + "th harmonic amplitude : " + spectrum [binValue]);
 				for (int bin = binValue-windowHalfLen; bin <= binValue+windowHalfLen; bin++)
 				{
 					if (bin < spectrum.Length && bin > 0) 

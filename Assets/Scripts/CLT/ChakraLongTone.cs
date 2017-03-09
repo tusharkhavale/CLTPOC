@@ -7,7 +7,7 @@ public class ChakraLongTone : MonoBehaviour {
 	private static ChakraLongTone instance;
 	private int widthMultiplier = 100;
 	private float interpolant = 0.1f;
-	private static Vector3 defaultScale = new Vector3 (0f, 1f, 1f);
+	private static Vector3 defaultScale = new Vector3 (0.1f, 0.1f, 1f);
 
 	public Transform [] chakras;
 
@@ -30,12 +30,11 @@ public class ChakraLongTone : MonoBehaviour {
 	{
 		for (int i = 0; i < harmonics.Length; i++) 
 		{
-
-//			Debug.Log ((i+1)+ " harmonic Amplitude : " + harmonics [i]);
-
 			float intensity = harmonics [i] * widthMultiplier;
 			float lerpX = Mathf.Lerp(chakras[i].localScale.x,intensity,interpolant);
-			Vector3 newScale = new Vector3( lerpX, chakras[i].localScale.y, chakras[i].localScale.z);
+
+			float lerpY = lerpX < 0.5 ? lerpX : 0.5f;
+			Vector3 newScale = new Vector3( lerpX, lerpY, chakras[i].localScale.z);
 			chakras [i].localScale = newScale;
 		}
 	}

@@ -130,9 +130,7 @@ public class MicrophoneInput : MonoBehaviour
 			{ // interpolate index using neighbours
 				var dL = spectrum[maxN - 1] / spectrum[maxN];
 				var dR = spectrum[maxN + 1] / spectrum[maxN];
-				Debug.Log("freq 1 : "+freqN);
 				freqN += 0.5f * (dR * dR - dL * dL);
-				Debug.Log("freq 2 : "+freqN);
 			}
 
 		}
