@@ -14,7 +14,7 @@ namespace UnityPitchControl.Input {
 		public List<int> _detectedPitches;
 		public Text txtPitch;
 		AudioSource audioPlayer;
-		int sampleRate = 44000;
+		int sampleRate = 44000;      // Not sure if 44000 works on device so usiing AudioSettings.outputSampleRate on line 27
 		int binSize = 1024;
 		float[] harmonics;
 
@@ -24,6 +24,7 @@ namespace UnityPitchControl.Input {
 			_instance = UnityEngine.Object.FindObjectOfType(typeof(InputManager)) as InputManager;
 			if (_instance == null) 
 			{
+				sampleRate = AudioSettings.outputSampleRate;
 				// try to load prefab
 				UnityEngine.Object managerPrefab = Resources.Load("InputManager"); // looks inside all 'Resources' folders in 'Assets'
 				if (managerPrefab != null) {
@@ -95,6 +96,8 @@ namespace UnityPitchControl.Input {
 			{
 				double sumOfSquares = 0.0;
 				int binValue = peakBin * i; 
+
+				Debug.Log (i + "th harmonic amplitude : " + spectrum [binValue]);
 				for (int bin = binValue-windowHalfLen; bin <= binValue+windowHalfLen; bin++)
 				{
 					if (bin < spectrum.Length && bin > 0) 
