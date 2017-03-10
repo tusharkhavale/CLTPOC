@@ -130,6 +130,21 @@ public class FrequencyMapping : MonoBehaviour {
 		noteLookUpDict.Add (C8, "C8");
 	}
 
+	// Debug
+//	public string note;
+//	public float frequnecy;
+//	public bool getFrequency;
+//	void Update()
+//	{
+//		if (getFrequency) 
+//		{
+//			Debug.Log ("frequency" + frequnecy);
+//			getFrequency = false;
+//			note = GetNote (frequnecy);
+//		}
+//		
+//	}
+
 	/// <summary>
 	/// Gets the nearest Note .
 	/// </summary>
@@ -151,21 +166,26 @@ public class FrequencyMapping : MonoBehaviour {
 			return noteLookUpDict [nearestFreq];
 		}
 
-
 		for (int i = 6; i >= 0; i--) // Iterating all Octaves
 		{
 			if (freq > octave [i, 0]) 	// Check if frequency is present in octave
 			{
 				for (int j = 1; j < 12; j++) // Iterate selected Octave
 				{
-					if (freq < octave [i, j]) 	// Get frequency range
-					{
+					if (freq < octave [i, j]) { 	// Get frequency range
 						// find the nearest note frequency
-						float midpoint = (octave [i, j] + octave [i, j - 1])/2;
+						float midpoint = (octave [i, j] + octave [i, j - 1]) / 2;
 						float nearestFreq = freq <= midpoint ? octave [i, j - 1] : octave [i, j];
 						return noteLookUpDict [nearestFreq];
 					}
 				}
+
+				if (i == 6)
+					return noteLookUpDict [C8];
+				
+				float mid = (octave [i, 11] + octave [i+1,0]) / 2;
+				float nearFreq = freq <= mid ? octave [i, 11] : octave [i+1, 0];
+				return noteLookUpDict [nearFreq];
 			}	
 		}
 		return "";    // if no note found

@@ -62,6 +62,7 @@ namespace UnityPitchControl.Input {
 				_pitchTracker.PitchDetected += new PitchTracker.PitchDetectedHandler(PitchDetectedListener);
 				spectrumData = new float[binSize];
 				isPlaying = true;
+				AnalyticsManager.GetInstance ().SetStartRecordingTime ();
 		}
 
 		float[] spectrumData;
@@ -92,6 +93,10 @@ namespace UnityPitchControl.Input {
 					index = i;
 				}
 			}
+
+			if (bin > 0.0009)
+				AnalyticsManager.GetInstance().AudioInputDetected();
+
 			float maxV = spectrumData[index];
 			int maxN = index;
 			float freqN = maxN; // pass the index to a float variable
@@ -101,7 +106,11 @@ namespace UnityPitchControl.Input {
 				var dR = spectrumData[maxN + 1] / spectrumData[maxN];
 				freqN += 0.5f * (dR * dR - dL * dL);
 			}
+			#if UNITY_IOS
+			spectralPitch = freqN * (sampleRate / 4f) / binSize;
+			#else
 			spectralPitch = freqN * (sampleRate / 2f) / binSize;
+			#endif
 		}
 
 		// Stop recording
@@ -109,6 +118,7 @@ namespace UnityPitchControl.Input {
 		{
 			isPlaying = false;
 			Microphone.End(_audioDevice);
+			AnalyticsManager.GetInstance ().EndRecordingTime();
 		}
 
 		// End game and go back to Game Selection Screen
@@ -133,7 +143,9 @@ namespace UnityPitchControl.Input {
 			}
 
 			// Check against spectral pitch
-			lowestPitch = spectralPitch > 2000 ? (int)spectralPitch : lowestPitch; 
+			if(lowestPitch == 0)
+			lowestPitch = spectralPitch > 3000 ? (int)spectralPitch : lowestPitch; 
+//			Debug.Log("spectral pitch : "+spectralPitch);
 
 			// Render pitch and Frequency on screen
 			txtFrequency.text = lowestPitch +" Hz";

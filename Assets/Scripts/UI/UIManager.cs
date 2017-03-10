@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // UI Screens
 public enum EScreen
@@ -17,7 +18,6 @@ public class UIManager : MonoBehaviour {
 	private static UIManager instance;
 	private EScreen currScreen = EScreen.Title;
 
-	public GameObject analytics;
 
 	public static UIManager GetInstance()
 	{
@@ -126,12 +126,9 @@ public class UIManager : MonoBehaviour {
 
 	}
 
-
-
 	public void ShowLoading()
 	{
 		transform.FindChild ("LoadingScreen").gameObject.SetActive(true);
 	}
-
 
 }

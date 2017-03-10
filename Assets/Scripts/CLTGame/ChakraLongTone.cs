@@ -8,6 +8,9 @@ public class ChakraLongTone : MonoBehaviour {
 	private int widthMultiplier = 100;
 	private float interpolant = 0.1f;
 	private static Vector3 defaultScale = new Vector3 (0.1f, 0.1f, 1f);
+	public GameObject startButton;
+	public GameObject micWarning;
+
 
 	public Transform [] chakras;
 
@@ -48,4 +51,25 @@ public class ChakraLongTone : MonoBehaviour {
 		}
 	}
 
+	void Start()
+	{
+		if (Microphone.devices.Length == 0) 
+		{
+			startButton.gameObject.SetActive (false);
+			micWarning.gameObject.SetActive (true);
+			StartCoroutine (CheckForMic ());
+		}
+		else
+			startButton.gameObject.SetActive (true);
+	}
+
+	IEnumerator CheckForMic()
+	{
+		while (Microphone.devices.Length == 0) 
+		{
+			yield return null;
+		}
+		startButton.gameObject.SetActive (true);
+		micWarning.gameObject.SetActive (false);
+	}
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SelectGameScreen : MonoBehaviour {
 
@@ -18,6 +19,7 @@ public class SelectGameScreen : MonoBehaviour {
 	public void OnClickAnalytics()
 	{
 		transform.FindChild ("Analytics").gameObject.SetActive (true);
+		transform.FindChild ("Analytics").GetComponentInChildren<Text> ().text = AnalyticsManager.GetInstance ().GetSessionLog ();
 	}
 
 
