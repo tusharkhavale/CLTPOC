@@ -29,7 +29,7 @@ namespace UnityPitchControl.Input {
 			_instance = UnityEngine.Object.FindObjectOfType(typeof(InputManager)) as InputManager;
 			if (_instance == null) 
 			{
-				sampleRate = AudioSettings.outputSampleRate;
+//				sampleRate = AudioSettings.outputSampleRate;
 				// try to load prefab
 				UnityEngine.Object managerPrefab = Resources.Load("InputManager"); // looks inside all 'Resources' folders in 'Assets'
 				if (managerPrefab != null) {
@@ -47,9 +47,9 @@ namespace UnityPitchControl.Input {
 				// Start recording
 
 				// Not dependable GetDeviceCaps
-//				int minFreq, maxFreq;
-//				Microphone.GetDeviceCaps(_audioDevice, out minFreq, out maxFreq);
-//				if (minFreq > 0) _micInput = Microphone.Start(_audioDevice, true, 1, minFreq);
+				int minFreq, maxFreq;
+				Microphone.GetDeviceCaps(_audioDevice, out minFreq, out maxFreq);
+				if (minFreq > 0) _micInput = Microphone.Start(_audioDevice, true, 1, minFreq);
 				_micInput = Microphone.Start(_audioDevice, true, 1, sampleRate);
 				audioPlayer = GetComponent<AudioSource> ();
 				audioPlayer.clip = _micInput;
@@ -133,7 +133,7 @@ namespace UnityPitchControl.Input {
 			}
 
 			// Check against spectral pitch
-			lowestPitch = spectralPitch > 1500 ? (int)spectralPitch : lowestPitch; 
+			lowestPitch = spectralPitch > 2000 ? (int)spectralPitch : lowestPitch; 
 
 			// Render pitch and Frequency on screen
 			txtFrequency.text = lowestPitch +" Hz";
