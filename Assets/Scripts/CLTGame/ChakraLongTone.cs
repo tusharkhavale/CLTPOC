@@ -6,7 +6,8 @@ public class ChakraLongTone : MonoBehaviour {
 
 	private static ChakraLongTone instance;
 	private int widthMultiplier = 100;
-	private float interpolant = 0.1f;
+	private float interpolant = 0.01f;
+	private int maxWidth = 7;
 	private static Vector3 defaultScale = new Vector3 (0.1f, 0.1f, 1f);
 	public GameObject startButton;
 	public GameObject micWarning;
@@ -31,9 +32,22 @@ public class ChakraLongTone : MonoBehaviour {
 
 	public void UpdateChakras(float [] harmonics)
 	{
+
+		float maxValue = 0f;
 		for (int i = 0; i < harmonics.Length; i++) 
 		{
-			float intensity = harmonics [i] * widthMultiplier;
+			if(harmonics [i] * widthMultiplier > maxValue)
+				maxValue  = harmonics [i] * widthMultiplier;	
+		}
+
+		float widthLimiter = maxValue / maxWidth;
+
+
+
+
+		for (int i = 0; i < harmonics.Length; i++) 
+		{
+			float intensity = harmonics [i] * widthMultiplier / widthLimiter;
 			float lerpX = Mathf.Lerp(chakras[i].localScale.x,intensity,interpolant);
 
 			float lerpY = lerpX < 0.5 ? lerpX : 0.5f;
@@ -46,7 +60,7 @@ public class ChakraLongTone : MonoBehaviour {
 	{
 		for (int i = 0; i < chakras.Length; i++) 
 		{
-			Vector3 scale = Vector3.Lerp(chakras[i].localScale,defaultScale,(0.05f));
+			Vector3 scale = Vector3.Lerp(chakras[i].localScale,defaultScale,(0.01f));
 			chakras [i].localScale = scale;
 		}
 	}
