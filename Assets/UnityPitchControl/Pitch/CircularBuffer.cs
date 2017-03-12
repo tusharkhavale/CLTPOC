@@ -7,11 +7,11 @@ namespace Pitch
 {
     public class CircularBuffer<T> : IDisposable
     {
-        int m_bufSize;
-        int m_begBufOffset;
-        int m_availBuf;
-        long m_startPos;   // total circular buffer position
-        T[] m_buffer;
+        int bufSize;
+        int begBufOffset;
+        int availBuf;
+        long startPosition;   // total circular buffer position
+        T[] buffer;
 
         /// <summary>
         /// Constructor
@@ -42,9 +42,9 @@ namespace Pitch
         /// </summary>
         public void Reset()
         {
-            m_begBufOffset = 0;
-            m_availBuf = 0;
-            m_startPos = 0;
+            begBufOffset = 0;
+            availBuf = 0;
+            startPosition = 0;
         }
 
         /// <summary>
@@ -55,16 +55,16 @@ namespace Pitch
         {
             Reset();
 
-            if (m_bufSize == newSize)
+            if (bufSize == newSize)
                 return;
 
-            if (m_buffer != null)
-                m_buffer = null;
+            if (buffer != null)
+                buffer = null;
 
-            m_bufSize = newSize;
+            bufSize = newSize;
 
-            if (m_bufSize > 0)
-                m_buffer = new T[m_bufSize];
+            if (bufSize > 0)
+                buffer = new T[bufSize];
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace Pitch
         /// </summary>
         public void Clear()
         {
-            Array.Clear(m_buffer, 0, m_buffer.Length);
+            Array.Clear(buffer, 0, buffer.Length);
         }
 
         /// <summary>
@@ -80,8 +80,8 @@ namespace Pitch
         /// </summary>
         public long StartPosition
         {
-            get { return m_startPos; }
-            set { m_startPos = value; }
+            get { return startPosition; }
+            set { startPosition = value; }
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Pitch
         /// </summary>
         public long EndPosition
         {
-            get { return m_startPos + m_availBuf; }
+            get { return startPosition + availBuf; }
         }
 
         /// <summary>
@@ -97,8 +97,8 @@ namespace Pitch
         /// </summary>
         public int Available
         {
-            get { return m_availBuf; }
-            set { m_availBuf = Math.Min(value, m_bufSize); }
+            get { return availBuf; }
+            set { availBuf = Math.Min(value, bufSize); }
         }
 
         /// <summary>
@@ -109,38 +109,38 @@ namespace Pitch
         /// <returns></returns>
         public int WriteBuffer(T[] m_pInBuffer, int count)
         {
-            count = Math.Min(count, m_bufSize);
+            count = Math.Min(count, bufSize);
 
-            var startPos = m_availBuf != m_bufSize ? m_availBuf : m_begBufOffset;
-            var pass1Count = Math.Min(count, m_bufSize - startPos);
+            var startPos = availBuf != bufSize ? availBuf : begBufOffset;
+            var pass1Count = Math.Min(count, bufSize - startPos);
             var pass2Count = count - pass1Count;
 
-            PitchDsp.CopyBuffer(m_pInBuffer, 0, m_buffer, startPos, pass1Count);
+            PitchDsp.CopyBuffer(m_pInBuffer, 0, buffer, startPos, pass1Count);
 
             if (pass2Count > 0)
-                PitchDsp.CopyBuffer(m_pInBuffer, pass1Count, m_buffer, 0, pass2Count);
+                PitchDsp.CopyBuffer(m_pInBuffer, pass1Count, buffer, 0, pass2Count);
 
             if (pass2Count == 0)
             {
                 // did not wrap around
-                if (m_availBuf != m_bufSize)
-                    m_availBuf += count;   // have never wrapped around
+                if (availBuf != bufSize)
+                    availBuf += count;   // have never wrapped around
                 else
                 {
-                    m_begBufOffset += count;
-                    m_startPos += count;
+                    begBufOffset += count;
+                    startPosition += count;
                 }
             }
             else
             {
                 // wrapped around
-                if (m_availBuf != m_bufSize)
-                    m_startPos += pass2Count;  // first time wrap-around
+                if (availBuf != bufSize)
+                    startPosition += pass2Count;  // first time wrap-around
                 else
-                    m_startPos += count;
+                    startPosition += count;
 
-                m_begBufOffset = pass2Count;
-                m_availBuf = m_bufSize;
+                begBufOffset = pass2Count;
+                availBuf = bufSize;
             }
 
             return count;
@@ -156,19 +156,19 @@ namespace Pitch
         public bool ReadBuffer(T[] outBuffer, long startRead, int readCount)
         {
             var endRead = (int)(startRead + readCount);
-            var endAvail = (int)(m_startPos + m_availBuf);
+            var endAvail = (int)(startPosition + availBuf);
 
-            if (startRead < m_startPos || endRead > endAvail)
+            if (startRead < startPosition || endRead > endAvail)
                 return false;
 
-            var startReadPos = (int)(((startRead - m_startPos) + m_begBufOffset) % m_bufSize);
-            var block1Samples = Math.Min(readCount, m_bufSize - startReadPos);
+            var startReadPos = (int)(((startRead - startPosition) + begBufOffset) % bufSize);
+            var block1Samples = Math.Min(readCount, bufSize - startReadPos);
             var block2Samples = readCount - block1Samples;
 
-            PitchDsp.CopyBuffer(m_buffer, startReadPos, outBuffer, 0, block1Samples);
+            PitchDsp.CopyBuffer(buffer, startReadPos, outBuffer, 0, block1Samples);
 
             if (block2Samples > 0)
-                PitchDsp.CopyBuffer(m_buffer, 0, outBuffer, block1Samples, block2Samples);
+                PitchDsp.CopyBuffer(buffer, 0, outBuffer, block1Samples, block2Samples);
 
             return true;
         }

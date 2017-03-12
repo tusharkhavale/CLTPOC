@@ -19,9 +19,12 @@ public class PlayerPrefsManager : MonoBehaviour {
 	void Awake()
 	{
 		instance = this;
-		PlayerPrefs.GetString ("UserName");
 	}
 
+	/// <summary>
+	/// Gets or sets the name of the player from Prefs.
+	/// </summary>
+	/// <value>The name of the player.</value>
 	public string PlayerName 
 	{
 		get{return PlayerPrefs.GetString ("UserName");}

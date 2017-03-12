@@ -29,7 +29,10 @@ public class ChakraLongTone : MonoBehaviour {
 		instance = this;
 	}
 
-
+	/// <summary>
+	/// Updates the chakras width based on harmoic data.
+	/// </summary>
+	/// <param name="harmonics">Harmonics.</param>
 	public void UpdateChakras(float [] harmonics)
 	{
 
@@ -56,6 +59,9 @@ public class ChakraLongTone : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// Normalizes with of Chakras to minimum level.
+	/// </summary>
 	public void NormalizeChakras()
 	{
 		for (int i = 0; i < chakras.Length; i++) 
@@ -65,6 +71,9 @@ public class ChakraLongTone : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// Check if Microphone is available.
+	/// </summary>
 	void Start()
 	{
 		if (Microphone.devices.Length == 0) 
@@ -77,6 +86,10 @@ public class ChakraLongTone : MonoBehaviour {
 			startButton.gameObject.SetActive (true);
 	}
 
+	/// <summary>
+	/// Checks for mic coroutine.
+	/// </summary>
+	/// <returns>The for mic.</returns>
 	IEnumerator CheckForMic()
 	{
 		while (Microphone.devices.Length == 0) 

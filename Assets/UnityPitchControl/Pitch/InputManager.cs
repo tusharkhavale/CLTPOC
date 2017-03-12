@@ -6,12 +6,12 @@ using UnityEngine.UI;
 
 namespace UnityPitchControl.Input {
 	public sealed class InputManager : MonoBehaviour {
-
-		public String _audioDevice = ""; // name of the audio device
-		public AudioClip _micInput;
-		public float[] _samples;
-		public PitchTracker _pitchTracker;
-		public List<int> _detectedPitches;
+		private static InputManager instance;
+		public String audioDevice = ""; // name of the audio device
+		public AudioClip micInput;
+		public float[] samples;
+		public PitchTracker pitchTracker;
+		public List<int> detectedPitches;
 		public float spectralPitch;
 		public Text txtFrequency;
 		public Text txtPitch;
@@ -20,67 +20,64 @@ namespace UnityPitchControl.Input {
 		int binSize = 1024;
 		float[] harmonics;
 		bool isPlaying;
+		float[] spectrumData;
 
 
 
-		private static InputManager _instance;
+		/// <summary>
+		/// Callback for start button
+		/// Starts the recording.
+		/// start Mic and assign clip to audio source
+		/// initialize PitchTracker class
+		/// </summary>
 		public void StartRecording() 
 		{
-			_instance = UnityEngine.Object.FindObjectOfType(typeof(InputManager)) as InputManager;
-			if (_instance == null) 
-			{
-//				sampleRate = AudioSettings.outputSampleRate;
-				// try to load prefab
-				UnityEngine.Object managerPrefab = Resources.Load("InputManager"); // looks inside all 'Resources' folders in 'Assets'
-				if (managerPrefab != null) {
-					UnityEngine.Object prefab = Instantiate(managerPrefab);
-					prefab.name = "InputManager"; // otherwise creates a game object with "(Clone)" appended to the name
-				} else if (UnityEngine.Object.FindObjectOfType(typeof(InputManager)) == null) {
-					// no prefab found, create new input manager
-					GameObject gameObject = new GameObject("InputManager");
-					gameObject.AddComponent<InputManager>();
-					DontDestroyOnLoad(gameObject);
-					gameObject.hideFlags = HideFlags.HideInHierarchy;
-				}
-				_instance = UnityEngine.Object.FindObjectOfType(typeof(InputManager)) as InputManager;
-			}
-				// Start recording
+			instance = this;
+			// Start recording
 
-				// Not dependable GetDeviceCaps
-				int minFreq, maxFreq;
-				Microphone.GetDeviceCaps(_audioDevice, out minFreq, out maxFreq);
-				if (minFreq > 0) _micInput = Microphone.Start(_audioDevice, true, 1, minFreq);
-				_micInput = Microphone.Start(_audioDevice, true, 1, sampleRate);
-				audioPlayer = GetComponent<AudioSource> ();
-				audioPlayer.clip = _micInput;
-				audioPlayer.Play ();
+			// Not dependable GetDeviceCaps
+			int minFreq, maxFreq;
+			Microphone.GetDeviceCaps(audioDevice, out minFreq, out maxFreq);
+			if (minFreq > 0) micInput = Microphone.Start(audioDevice, true, 1, minFreq);
+			micInput = Microphone.Start(audioDevice, true, 1, sampleRate);
+			audioPlayer = GetComponent<AudioSource> ();
+			audioPlayer.clip = micInput;
+			audioPlayer.Play ();
 
-				// prepare for pitch tracking
-				_samples = new float[_micInput.samples * _micInput.channels];
-				_pitchTracker = new PitchTracker();
-				_pitchTracker.SampleRate = _micInput.samples;
-				_pitchTracker.PitchDetected += new PitchTracker.PitchDetectedHandler(PitchDetectedListener);
-				spectrumData = new float[binSize];
-				isPlaying = true;
-				AnalyticsManager.GetInstance ().SetStartRecordingTime ();
+			// prepare for pitch tracking
+			samples = new float[micInput.samples * micInput.channels];
+			pitchTracker = new PitchTracker();
+			pitchTracker.SampleRate = micInput.samples;
+			pitchTracker.PitchDetected += new PitchTracker.PitchDetectedHandler(PitchDetectedListener);
+			spectrumData = new float[binSize];
+			isPlaying = true;
+			AnalyticsManager.GetInstance ().SetStartRecordingTime ();
 		}
 
-		float[] spectrumData;
+		/// <summary>
+		/// Get output data for pitch detection
+		/// GetSpectrum Data for spectrum analysis
+		/// Update Spectrum visualizer
+		/// </summary>
 		public void Update() 
 		{
 			// Game not startted or paused
 			if (!isPlaying)
 				return;
 
-			_detectedPitches.Clear(); // clear pitches from last update
-			_micInput.GetData(_samples, 0);
+			detectedPitches.Clear(); // clear pitches from last update
+			micInput.GetData(samples, 0);
 			audioPlayer.GetSpectrumData (spectrumData, 0, FFTWindow.BlackmanHarris);
 			FindPeakHarmonic ();
 			AudioVisualizer.GetInstance ().UpdateVisualizer (spectrumData);
-			_pitchTracker.ProcessBuffer(_samples);
+			pitchTracker.ProcessBuffer(samples);
 				
 		}
 
+		/// <summary>
+		/// Finds the peak harmonic to detect pitch
+		/// Works for frequencies above 3K
+		/// </summary>
 		void FindPeakHarmonic()
 		{
 			float bin = 0;
@@ -106,37 +103,44 @@ namespace UnityPitchControl.Input {
 				var dR = spectrumData[maxN + 1] / spectrumData[maxN];
 				freqN += 0.5f * (dR * dR - dL * dL);
 			}
-			#if UNITY_IOS
-			spectralPitch = freqN * (sampleRate / 4f) / binSize;
-			#else
+		
 			spectralPitch = freqN * (sampleRate / 2f) / binSize;
-			#endif
 		}
 
-		// Stop recording
+		/// <summary>
+		/// Stops the recording.
+		/// Toggle isPlaying 
+		/// </summary>
 		public void StopRecording()
 		{
 			isPlaying = false;
-			Microphone.End(_audioDevice);
+			Microphone.End(audioDevice);
 			AnalyticsManager.GetInstance ().EndRecordingTime();
 		}
 
-		// End game and go back to Game Selection Screen
+		/// <summary>
+		/// Callback for End button
+		/// UI transition to GameSelection Page
+		/// </summary>
 		public void EndGame()
 		{
 			StopRecording ();
-			_pitchTracker = null;
+			pitchTracker = null;
 			GameController.gameController.uiManager.UIScreenTransition (EScreen.SelectGame);
 		}
 
-		// Pitch detected callback
+		/// <summary>
+		/// Pitchs detected delegate.
+		/// </summary>
+		/// <param name="sender">Sender.</param>
+		/// <param name="pitchRecord">Pitch record.</param>
 		private void PitchDetectedListener(PitchTracker sender, PitchTracker.PitchRecord pitchRecord) 
 		{
 			int pitch = (int)Math.Round(pitchRecord.Pitch);
-			if (!_detectedPitches.Contains(pitch)) _detectedPitches.Add(pitch);
+			if (!detectedPitches.Contains(pitch)) detectedPitches.Add(pitch);
 
 			int lowestPitch = pitch;
-			foreach(int p in _detectedPitches)
+			foreach(int p in detectedPitches)
 			{
 				if (p > 0 && p < lowestPitch)
 					lowestPitch = p;
@@ -145,7 +149,6 @@ namespace UnityPitchControl.Input {
 			// Check against spectral pitch
 			if(lowestPitch == 0)
 			lowestPitch = spectralPitch > 3000 ? (int)spectralPitch : lowestPitch; 
-//			Debug.Log("spectral pitch : "+spectralPitch);
 
 			// Render pitch and Frequency on screen
 			txtFrequency.text = lowestPitch +" Hz";
@@ -155,13 +158,20 @@ namespace UnityPitchControl.Input {
 			float freqN = lowestPitch * binSize*2f/sampleRate;
 			int index = (int)freqN;     // Not using Matf.RoundToInt because lower int value required and not nearest
 			if (pitch != 0)
-				ChakraLongTone.GetInstance ().UpdateChakras (GetHarmoicsAmplitude (spectrumData, index, 0, 7));
+				ChakraLongTone.GetInstance ().UpdateChakras (GetHarmoicsAmplitude (spectrumData, index, 0, 7));  
 			else
 				ChakraLongTone.GetInstance ().NormalizeChakras ();		
 		}
 
 
-		// Calculate amplitude of harmoics
+		/// <summary>
+		/// Gets the harmoics amplitude.
+		/// </summary>
+		/// <returns>The harmoics amplitude.</returns>
+		/// <param name="spectrum">Spectrum.</param>
+		/// <param name="peakBin">Peak bin.</param>
+		/// <param name="windowHalfLen">Window half length.</param>
+		/// <param name="harmonic">Harmonic.</param>
 		float[] GetHarmoicsAmplitude(float[] spectrum,int peakBin, int windowHalfLen, int harmonic)
 		{
 			float[] harmonicsData = new float[harmonic];
@@ -179,7 +189,6 @@ namespace UnityPitchControl.Input {
 				}
 
 				harmonicsData[i-1] = Mathf.Sqrt((float)sumOfSquares);	
-				//			return Mathf.Sqrt((float)sumOfSquares);	
 			}
 			return harmonicsData;
 		}

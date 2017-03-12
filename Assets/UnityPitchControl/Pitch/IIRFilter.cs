@@ -34,24 +34,24 @@ namespace Pitch
         const int kHistMask = 31;
         const int kHistSize = 32;
 
-        private int m_order;
-        private ProtoType m_protoType;
-        private FilterType m_filterType;
+        private int order;
+        private ProtoType protoType;
+        private FilterType filterType;
 
-        private float m_fp1;
-        private float m_fp2;
-        private float m_fN;
-        private float m_ripple;
-        private float m_sampleRate;
-        private double[] m_real;
-        private double[] m_imag;
-        private double[] m_z;
-        private double[] m_aCoeff;
-        private double[] m_bCoeff;
-        private double[] m_inHistory;
-        private double[] m_outHistory;
-        private int m_histIdx;
-        private bool m_invertDenormal;
+        private float fp1;
+        private float fp2;
+        private float fN;
+        private float ripple;
+        private float sampleRate;
+        private double[] real;
+        private double[] imag;
+        private double[] z;
+        private double[] aCoeff;
+        private double[] bCoeff;
+        private double[] inHistory;
+        private double[] outHistory;
+        private int histIdx;
+        private bool invertDenormal;
 
         public IIRFilter()
         {
@@ -64,33 +64,33 @@ namespace Pitch
         {
             get
             {
-                if (m_order < 1 || m_order > 16 ||
-                    m_protoType == ProtoType.None ||
-                    m_filterType == FilterType.None ||
-                    m_sampleRate <= 0.0f ||
-                    m_fN <= 0.0f)
+                if (order < 1 || order > 16 ||
+                    protoType == ProtoType.None ||
+                    filterType == FilterType.None ||
+                    sampleRate <= 0.0f ||
+                    fN <= 0.0f)
                     return false;
 
-                switch (m_filterType)
+                switch (filterType)
                 {
                     case FilterType.LP:
-                        if (m_fp2 <= 0.0f)
+                        if (fp2 <= 0.0f)
                             return false;
                         break;
 
                     case FilterType.BP:
-                        if (m_fp1 <= 0.0f || m_fp2 <= 0.0f || m_fp1 >= m_fp2)
+                        if (fp1 <= 0.0f || fp2 <= 0.0f || fp1 >= fp2)
                             return false;
                         break;
 
                     case FilterType.HP:
-                        if (m_fp1 <= 0.0f)
+                        if (fp1 <= 0.0f)
                             return false;
                         break;
                 }
 
                 // For bandpass, the order must be even
-                if (m_filterType == FilterType.BP && (m_order & 1) != 0)
+                if (filterType == FilterType.BP && (order & 1) != 0)
                     return false;
 
                 return true;
@@ -102,11 +102,11 @@ namespace Pitch
         /// </summary>
         public ProtoType Proto
         {
-            get { return m_protoType; }
+            get { return protoType; }
 
             set
             {
-                m_protoType = value;
+                protoType = value;
                 Design();
             }
         }
@@ -116,25 +116,25 @@ namespace Pitch
         /// </summary>
         public FilterType Type
         {
-            get { return m_filterType; }
+            get { return filterType; }
 
             set
             {
-                m_filterType = value;
+                filterType = value;
                 Design();
             }
         }
 
         public int Order
         {
-            get { return m_order; }
+            get { return order; }
 
             set
             {
-                m_order = Math.Min(16, Math.Max(1, Math.Abs(value)));
+                order = Math.Min(16, Math.Max(1, Math.Abs(value)));
 
-                if (m_filterType == FilterType.BP && Odd(m_order))
-                    m_order++;
+                if (filterType == FilterType.BP && Odd(order))
+                    order++;
 
                 Design();
             }
@@ -142,45 +142,45 @@ namespace Pitch
 
         public float SampleRate
         {
-            get { return m_sampleRate; }
+            get { return sampleRate; }
 
             set
             {
-                m_sampleRate = value;
-                m_fN = 0.5f * m_sampleRate;
+                sampleRate = value;
+                fN = 0.5f * sampleRate;
                 Design();
             }
         }
 
         public float FreqLow
         {
-            get { return m_fp1; }
+            get { return fp1; }
 
             set
             {
-                m_fp1 = value;
+                fp1 = value;
                 Design();
             }
         }
 
         public float FreqHigh
         {
-            get { return m_fp2; }
+            get { return fp2; }
 
             set
             {
-                m_fp2 = value;
+                fp2 = value;
                 Design();
             }
         }
 
         public float Ripple
         {
-            get { return m_ripple; }
+            get { return ripple; }
 
             set
             {
-                m_ripple = value;
+                ripple = value;
                 Design();
             }
         }
@@ -221,15 +221,15 @@ namespace Pitch
         /// </summary>
         private void LocatePolesAndZeros()
         {
-            m_real = new double[m_order + 1];
-            m_imag = new double[m_order + 1];
-            m_z = new double[m_order + 1];
+            real = new double[order + 1];
+            imag = new double[order + 1];
+            z = new double[order + 1];
             double ln10 = Math.Log(10.0);
 
             // Butterworth, Chebyshev parameters
-            int n = m_order;
+            int n = order;
 
-            if (m_filterType == FilterType.BP)
+            if (filterType == FilterType.BP)
                 n = n / 2;
 
             int ir = n % 2;
@@ -237,18 +237,18 @@ namespace Pitch
             int n2 = (3 * n + ir) / 2 - 1;
             double f1;
 
-            switch (m_filterType)
+            switch (filterType)
             {
                 case FilterType.LP:
-                    f1 = m_fp2;
+                    f1 = fp2;
                     break;
 
                 case FilterType.HP:
-                    f1 = m_fN - m_fp1;
+                    f1 = fN - fp1;
                     break;
 
                 case FilterType.BP:
-                    f1 = m_fp2 - m_fp1;
+                    f1 = fp2 - fp1;
                     break;
 
                 default:
@@ -256,7 +256,7 @@ namespace Pitch
                     break;
             }
 
-            double tanw1 = Math.Tan(0.5 * Math.PI * f1 / m_fN);
+            double tanw1 = Math.Tan(0.5 * Math.PI * f1 / fN);
             double tansqw1 = Sqr(tanw1);
 
             // Real and Imaginary parts of low-pass poles
@@ -266,7 +266,7 @@ namespace Pitch
             {
                 t = 0.5 * (2 * k + 1 - ir) * Math.PI / (double)n;
 
-                switch (m_protoType)
+                switch (protoType)
                 {
                     case ProtoType.Butterworth:
                         double b3 = 1.0 - 2.0 * tanw1 * Math.Cos(t) + tansqw1;
@@ -275,7 +275,7 @@ namespace Pitch
                         break;
 
                     case ProtoType.Chebyshev:
-                        double d = 1.0 - Math.Exp(-0.05 * m_ripple * ln10);
+                        double d = 1.0 - Math.Exp(-0.05 * ripple * ln10);
                         double e = 1.0 / Math.Sqrt(1.0 / Sqr(1.0 - d) - 1.0);
                         double x = Math.Pow(Math.Sqrt(e * e + 1.0) + e, 1.0 / (double)n);
                         a = 0.5 * (x - 1.0 / x);
@@ -289,37 +289,37 @@ namespace Pitch
                 }
 
                 int m = 2 * (n2 - k) + 1;
-                m_real[m + ir] = r;
-                m_imag[m + ir] = Math.Abs(i);
-                m_real[m + ir + 1] = r;
-                m_imag[m + ir + 1] = -Math.Abs(i);
+                real[m + ir] = r;
+                imag[m + ir] = Math.Abs(i);
+                real[m + ir + 1] = r;
+                imag[m + ir + 1] = -Math.Abs(i);
             }
 
             if (Odd(n))
             {
-                if (m_protoType == ProtoType.Butterworth)
+                if (protoType == ProtoType.Butterworth)
                     r = (1.0 - tansqw1) / (1.0 + 2.0 * tanw1 + tansqw1);
 
-                if (m_protoType == ProtoType.Chebyshev)
+                if (protoType == ProtoType.Chebyshev)
                     r = 2.0 / (1.0 + a * tanw1) - 1.0;
 
-                m_real[1] = r;
-                m_imag[1] = 0.0;
+                real[1] = r;
+                imag[1] = 0.0;
             }
 
-            switch (m_filterType)
+            switch (filterType)
             {
                 case FilterType.LP:
                     for (int m = 1; m <= n; m++)
-                        m_z[m] = -1.0;
+                        z[m] = -1.0;
                     break;
 
                 case FilterType.HP:
                     // Low-pass to high-pass transformation
                     for (int m = 1; m <= n; m++)
                     {
-                        m_real[m] = -m_real[m];
-                        m_z[m] = 1.0;
+                        real[m] = -real[m];
+                        z[m] = 1.0;
                     }
                     break;
 
@@ -327,20 +327,20 @@ namespace Pitch
                     // Low-pass to bandpass transformation
                     for (int m = 1; m <= n; m++)
                     {
-                        m_z[m] = 1.0;
-                        m_z[m + n] = -1.0;
+                        z[m] = 1.0;
+                        z[m + n] = -1.0;
                     }
 
-                    double f4 = 0.5 * Math.PI * m_fp1 / m_fN;
-                    double f5 = 0.5 * Math.PI * m_fp2 / m_fN;
+                    double f4 = 0.5 * Math.PI * fp1 / fN;
+                    double f5 = 0.5 * Math.PI * fp2 / fN;
                     double aa = Math.Cos(f4 + f5) / Math.Cos(f5 - f4);
                     double aR, aI, h1, h2, p1R, p2R, p1I, p2I;
 
-                    for (int m1 = 0; m1 <= (m_order - 1) / 2; m1++)
+                    for (int m1 = 0; m1 <= (order - 1) / 2; m1++)
                     {
                         int m = 1 + 2 * m1;
-                        aR = m_real[m];
-                        aI = m_imag[m];
+                        aR = real[m];
+                        aI = imag[m];
 
                         if (Math.Abs(aI) < 0.0001)
                         {
@@ -375,25 +375,25 @@ namespace Pitch
                             p2I = fI - sI;
                         }
 
-                        m_real[m] = p1R;
-                        m_real[m + 1] = p2R;
-                        m_imag[m] = p1I;
-                        m_imag[m + 1] = p2I;
+                        real[m] = p1R;
+                        real[m + 1] = p2R;
+                        imag[m] = p1I;
+                        imag[m + 1] = p2I;
                     }
 
                     if (Odd(n))
                     {
-                        m_real[2] = m_real[n + 1];
-                        m_imag[2] = m_imag[n + 1];
+                        real[2] = real[n + 1];
+                        imag[2] = imag[n + 1];
                     }
 
                     for (int k = n; k >= 1; k--)
                     {
                         int m = 2 * k - 1;
-                        m_real[m] = m_real[k];
-                        m_real[m + 1] = m_real[k];
-                        m_imag[m] = Math.Abs(m_imag[k]);
-                        m_imag[m + 1] = -Math.Abs(m_imag[k]);
+                        real[m] = real[k];
+                        real[m + 1] = real[k];
+                        imag[m] = Math.Abs(imag[k]);
+                        imag[m + 1] = -Math.Abs(imag[k]);
                     }
 
                     break;
@@ -408,60 +408,60 @@ namespace Pitch
             if (!this.FilterValid)
                 return;
 
-            m_aCoeff = new double[m_order + 1];
-            m_bCoeff = new double[m_order + 1];
-            m_inHistory = new double[kHistSize];
-            m_outHistory = new double[kHistSize];
+            aCoeff = new double[order + 1];
+            bCoeff = new double[order + 1];
+            inHistory = new double[kHistSize];
+            outHistory = new double[kHistSize];
 
-            double[] newA = new double[m_order + 1];
-            double[] newB = new double[m_order + 1];
+            double[] newA = new double[order + 1];
+            double[] newB = new double[order + 1];
 
             // Find filter poles and zeros
             LocatePolesAndZeros();
 
             // Compute filter coefficients from pole/zero values
-            m_aCoeff[0] = 1.0;
-            m_bCoeff[0] = 1.0;
+            aCoeff[0] = 1.0;
+            bCoeff[0] = 1.0;
 
-            for (int i = 1; i <= m_order; i++)
+            for (int i = 1; i <= order; i++)
             {
-                m_aCoeff[i] = 0.0;
-                m_bCoeff[i] = 0.0;
+                aCoeff[i] = 0.0;
+                bCoeff[i] = 0.0;
             }
 
             int k = 0;
-            int n = m_order;
+            int n = order;
             int pairs = n / 2;
 
-            if (Odd(m_order))
+            if (Odd(order))
             {
                 // First subfilter is first order
-                m_aCoeff[1] = -m_z[1];
-                m_bCoeff[1] = -m_real[1];
+                aCoeff[1] = -z[1];
+                bCoeff[1] = -real[1];
                 k = 1;
             }
 
             for (int p = 1; p <= pairs; p++)
             {
                 int m = 2 * p - 1 + k;
-                double alpha1 = -(m_z[m] + m_z[m + 1]);
-                double alpha2 = m_z[m] * m_z[m + 1];
-                double beta1 = -2.0 * m_real[m];
-                double beta2 = Sqr(m_real[m]) + Sqr(m_imag[m]);
+                double alpha1 = -(z[m] + z[m + 1]);
+                double alpha2 = z[m] * z[m + 1];
+                double beta1 = -2.0 * real[m];
+                double beta2 = Sqr(real[m]) + Sqr(imag[m]);
 
-                newA[1] = m_aCoeff[1] + alpha1 * m_aCoeff[0];
-                newB[1] = m_bCoeff[1] + beta1 * m_bCoeff[0];
+                newA[1] = aCoeff[1] + alpha1 * aCoeff[0];
+                newB[1] = bCoeff[1] + beta1 * bCoeff[0];
 
                 for (int i = 2; i <= n; i++)
                 {
-                    newA[i] = m_aCoeff[i] + alpha1 * m_aCoeff[i - 1] + alpha2 * m_aCoeff[i - 2];
-                    newB[i] = m_bCoeff[i] + beta1 * m_bCoeff[i - 1] + beta2 * m_bCoeff[i - 2];
+                    newA[i] = aCoeff[i] + alpha1 * aCoeff[i - 1] + alpha2 * aCoeff[i - 2];
+                    newB[i] = bCoeff[i] + beta1 * bCoeff[i - 1] + beta2 * bCoeff[i - 2];
                 }
 
                 for (int i = 1; i <= n; i++)
                 {
-                    m_aCoeff[i] = newA[i];
-                    m_bCoeff[i] = newB[i];
+                    aCoeff[i] = newA[i];
+                    bCoeff[i] = newB[i];
                 }
             }
 
@@ -474,13 +474,13 @@ namespace Pitch
         /// </summary>
         public void Reset()
         {
-            if (m_inHistory != null)
-                m_inHistory.Clear();
+            if (inHistory != null)
+                inHistory.Clear();
 
-            if (m_outHistory != null)
-                m_outHistory.Clear();
+            if (outHistory != null)
+                outHistory.Clear();
 
-            m_histIdx = 0;
+            histIdx = 0;
         }
 
         /// <summary>
@@ -489,23 +489,23 @@ namespace Pitch
         /// <param name="historyValue"></param>
         public void Reset(double startValue)
         {
-            m_histIdx = 0;
+            histIdx = 0;
 
-            if (m_inHistory == null || m_outHistory == null)
+            if (inHistory == null || outHistory == null)
                 return;
 
-            m_inHistory.Fill(startValue);
+            inHistory.Fill(startValue);
 
-            if (m_inHistory != null)
+            if (inHistory != null)
             {
-                switch (m_filterType)
+                switch (filterType)
                 {
                     case FilterType.LP:
-                        m_outHistory.Fill(startValue);
+                        outHistory.Fill(startValue);
                         break;
 
                     default:
-                        m_outHistory.Clear();
+                        outHistory.Clear();
                         break;
                 }
             }
@@ -518,23 +518,23 @@ namespace Pitch
         public void FilterBuffer(float[] srcBuf, long srcPos, float[] dstBuf, long dstPos, long nLen)
         {
             const double kDenormal = 0.000000000000001;
-            double denormal = m_invertDenormal ? -kDenormal : kDenormal;
-            m_invertDenormal = !m_invertDenormal;
+            double denormal = invertDenormal ? -kDenormal : kDenormal;
+            invertDenormal = !invertDenormal;
 
             for (int sampleIdx = 0; sampleIdx < nLen; sampleIdx++)
             {
                 double sum = 0.0f;
 
-                m_inHistory[m_histIdx] = srcBuf[srcPos + sampleIdx] + denormal;
+                inHistory[histIdx] = srcBuf[srcPos + sampleIdx] + denormal;
 
-                for (int idx = 0; idx < m_aCoeff.Length; idx++)
-                    sum += m_aCoeff[idx] * m_inHistory[(m_histIdx - idx) & kHistMask];
+                for (int idx = 0; idx < aCoeff.Length; idx++)
+                    sum += aCoeff[idx] * inHistory[(histIdx - idx) & kHistMask];
 
-                for (int idx = 1; idx < m_bCoeff.Length; idx++)
-                    sum -= m_bCoeff[idx] * m_outHistory[(m_histIdx - idx) & kHistMask];
+                for (int idx = 1; idx < bCoeff.Length; idx++)
+                    sum -= bCoeff[idx] * outHistory[(histIdx - idx) & kHistMask];
 
-                m_outHistory[m_histIdx] = sum;
-                m_histIdx = (m_histIdx + 1) & kHistMask;
+                outHistory[histIdx] = sum;
+                histIdx = (histIdx + 1) & kHistMask;
                 dstBuf[dstPos + sampleIdx] = (float)sum;
             }
         }
@@ -543,16 +543,16 @@ namespace Pitch
         {
             double sum = 0.0f;
 
-            m_inHistory[m_histIdx] = inVal;
+            inHistory[histIdx] = inVal;
 
-            for (int idx = 0; idx < m_aCoeff.Length; idx++)
-                sum += m_aCoeff[idx] * m_inHistory[(m_histIdx - idx) & kHistMask];
+            for (int idx = 0; idx < aCoeff.Length; idx++)
+                sum += aCoeff[idx] * inHistory[(histIdx - idx) & kHistMask];
 
-            for (int idx = 1; idx < m_bCoeff.Length; idx++)
-                sum -= m_bCoeff[idx] * m_outHistory[(m_histIdx - idx) & kHistMask];
+            for (int idx = 1; idx < bCoeff.Length; idx++)
+                sum -= bCoeff[idx] * outHistory[(histIdx - idx) & kHistMask];
 
-            m_outHistory[m_histIdx] = sum;
-            m_histIdx = (m_histIdx + 1) & kHistMask;
+            outHistory[histIdx] = sum;
+            histIdx = (histIdx + 1) & kHistMask;
 
             return (float)sum;
         }
@@ -586,14 +586,14 @@ namespace Pitch
                 sbc = 0.0f;
                 sbs = 0.0f;
 
-                for (int k = 0; k <= m_order; k++)
+                for (int k = 0; k <= order; k++)
                 {
                     c = Math.Cos(k * theta);
                     s = Math.Sin(k * theta);
-                    sac += c * m_aCoeff[k];
-                    sas += s * m_aCoeff[k];
-                    sbc += c * m_bCoeff[k];
-                    sbs += s * m_bCoeff[k];
+                    sac += c * aCoeff[k];
+                    sas += s * aCoeff[k];
+                    sbc += c * bCoeff[k];
+                    sbs += s * bCoeff[k];
                 }
 
                 g[i] = sc * (float)Math.Log((Sqr(sac) + Sqr(sas)) / (Sqr(sbc) + Sqr(sbs)));
@@ -607,8 +607,8 @@ namespace Pitch
             // Normalize numerator (a) coefficients
             float normFactor = (float)Math.Pow(10.0, -0.05 * gMax);
 
-            for (int i = 0; i <= m_order; i++)
-                m_aCoeff[i] *= normFactor;
+            for (int i = 0; i <= order; i++)
+                aCoeff[i] *= normFactor;
 
             return g;
         }

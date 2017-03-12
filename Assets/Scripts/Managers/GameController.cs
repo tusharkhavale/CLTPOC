@@ -18,7 +18,9 @@ public class GameController : MonoBehaviour {
 		gameController = this;
 	}
 
-	// Get all Manager instances
+	/// <summary>
+	/// Get all manager Instances.
+	/// </summary>
 	void Start()
 	{
 		uiManager = UIManager.GetInstance ();

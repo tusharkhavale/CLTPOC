@@ -23,32 +23,32 @@ namespace Pitch
         private const int kAvgCount = 1;			        // number of average pitch samples to take
         private const float kCircularBufSaveTime = 1.0f;    // Amount of samples to store in the history buffer
 
-        private PitchDsp m_dsp;
-        private CircularBuffer<float> m_circularBufferLo;
-        private CircularBuffer<float> m_circularBufferHi;
-        private double m_sampleRate;
-        private float m_detectLevelThreshold = 0.01f;       // -40dB
-        private int m_pitchRecordsPerSecond = 50;           // default is 50, or one record every 20ms
+        private PitchDsp dsp;
+        private CircularBuffer<float> circularBufferLo;
+        private CircularBuffer<float> circularBufferHi;
+        private double sampleRate;
+        private float detectLevelThreshold = 0.01f;       // -40dB
+        private int pitchRecordsPerSecond = 50;           // default is 50, or one record every 20ms
 
-        private float[] m_pitchBufLo;
-        private float[] m_pitchBufHi;
-        private int m_pitchBufSize;
-        private int m_samplesPerPitchBlock;
-        private int m_curPitchIndex;
-        private long m_curPitchSamplePos;
+        private float[] pitchBufLo;
+        private float[] pitchBufHi;
+        private int pitchBufSize;
+        private int samplesPerPitchBlock;
+        private int curPitchIndex;
+        private long curPitchSamplePos;
 
-        private int m_detectOverlapSamples;
-        private float m_maxOverlapDiff;
+        private int detectOverlapSamples;
+        private float maxOverlapDiff;
 
-        private bool m_recordPitchRecords;
-        private int m_pitchRecordHistorySize;
-        private List<PitchRecord> m_pitchRecords = new List<PitchRecord>();
-        private PitchRecord m_curPitchRecord = new PitchRecord();
+        private bool recordPitchRecords;
+        private int pitchRecordHistorySize;
+        private List<PitchRecord> pitchRecords = new List<PitchRecord>();
+        private PitchRecord curPitchRecord = new PitchRecord();
 
-        private IIRFilter m_iirFilterLoLo;
-        private IIRFilter m_iirFilterLoHi;
-        private IIRFilter m_iirFilterHiLo;
-        private IIRFilter m_iirFilterHiHi;
+        private IIRFilter iirFilterLoLo;
+        private IIRFilter iirFilterLoHi;
+        private IIRFilter iirFilterHiLo;
+        private IIRFilter iirFilterHiHi;
 
         public delegate void PitchDetectedHandler(PitchTracker sender, PitchRecord pitchRecord);
 		public event PitchDetectedHandler PitchDetected; 
@@ -67,10 +67,10 @@ namespace Pitch
         {
             set
             {
-                if (m_sampleRate == value)
+                if (sampleRate == value)
                     return;
 
-                m_sampleRate = value;
+                sampleRate = value;
                 Setup();
             }
         }
@@ -84,10 +84,10 @@ namespace Pitch
             {
                 var newValue = Math.Max(0.0001f, Math.Min(1.0f, value));
 
-                if (m_detectLevelThreshold == newValue)
+                if (detectLevelThreshold == newValue)
                     return;
 
-                m_detectLevelThreshold = newValue;
+                detectLevelThreshold = newValue;
                 Setup();
             }
         }
@@ -97,7 +97,7 @@ namespace Pitch
         /// </summary>
         public int SamplesPerPitchBlock
         {
-            get { return m_samplesPerPitchBlock; }
+            get { return samplesPerPitchBlock; }
         }
 
         /// <summary>
@@ -105,10 +105,10 @@ namespace Pitch
         /// </summary>
         public int PitchRecordsPerSecond
         {
-            get { return m_pitchRecordsPerSecond; }
+            get { return pitchRecordsPerSecond; }
             set
             {
-                m_pitchRecordsPerSecond = Math.Max(1, Math.Min(100, value));
+                pitchRecordsPerSecond = Math.Max(1, Math.Min(100, value));
                 Setup(); 
             }
         }
@@ -118,16 +118,16 @@ namespace Pitch
         /// </summary>
         public bool RecordPitchRecords
         {
-            get { return m_recordPitchRecords; }
+            get { return recordPitchRecords; }
             set
             {
-                if (m_recordPitchRecords == value)
+                if (recordPitchRecords == value)
                     return;
                 
-                m_recordPitchRecords = value;
+                recordPitchRecords = value;
 
-                if (!m_recordPitchRecords)
-                    m_pitchRecords = new List<PitchRecord>();
+                if (!recordPitchRecords)
+                    pitchRecords = new List<PitchRecord>();
             }
         }
 
@@ -138,12 +138,12 @@ namespace Pitch
         /// </summary>
         public int PitchRecordHistorySize
         {
-            get { return m_pitchRecordHistorySize; }
+            get { return pitchRecordHistorySize; }
             set 
             { 
-                m_pitchRecordHistorySize = value;
+                pitchRecordHistorySize = value;
 
-                m_pitchRecords.Capacity = m_pitchRecordHistorySize;
+                pitchRecords.Capacity = pitchRecordHistorySize;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Pitch
         /// </summary>
         public IList PitchRecords
         {
-            get { return m_pitchRecords.AsReadOnly(); }
+            get { return pitchRecords.AsReadOnly(); }
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace Pitch
         /// </summary>
         public PitchRecord CurrentPitchRecord
         {
-            get { return m_curPitchRecord; }
+            get { return curPitchRecord; }
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace Pitch
         /// </summary>
         public long CurrentPitchSamplePosition
         {
-            get { return m_curPitchSamplePos; }
+            get { return curPitchSamplePos; }
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace Pitch
         /// </summary>
         public int DetectSampleOffset
         {
-            get { return (m_pitchBufSize + m_detectOverlapSamples) / 2; }
+            get { return (pitchBufSize + detectOverlapSamples) / 2; }
         }
 
         /// <summary>
@@ -210,24 +210,24 @@ namespace Pitch
         /// </summary>
         public void Reset()
         {
-            m_curPitchIndex = 0;
-            m_curPitchSamplePos = 0;
-            m_pitchRecords.Clear();
-            m_iirFilterLoLo.Reset();
-            m_iirFilterLoHi.Reset();
-            m_iirFilterHiLo.Reset();
-            m_iirFilterHiHi.Reset();
-            m_circularBufferLo.Reset();
-            m_circularBufferLo.Clear();
-            m_circularBufferHi.Reset();
-            m_circularBufferHi.Clear();
-            m_pitchBufLo.Clear();
-            m_pitchBufHi.Clear();
+            curPitchIndex = 0;
+            curPitchSamplePos = 0;
+            pitchRecords.Clear();
+            iirFilterLoLo.Reset();
+            iirFilterLoHi.Reset();
+            iirFilterHiLo.Reset();
+            iirFilterHiHi.Reset();
+            circularBufferLo.Reset();
+            circularBufferLo.Clear();
+            circularBufferHi.Reset();
+            circularBufferHi.Clear();
+            pitchBufLo.Clear();
+            pitchBufHi.Clear();
 
-            m_circularBufferLo.StartPosition = -m_detectOverlapSamples;
-            m_circularBufferLo.Available = m_detectOverlapSamples;
-            m_circularBufferHi.StartPosition = -m_detectOverlapSamples;
-            m_circularBufferHi.Available = m_detectOverlapSamples;
+            circularBufferLo.StartPosition = -detectOverlapSamples;
+            circularBufferLo.Available = detectOverlapSamples;
+            circularBufferHi.StartPosition = -detectOverlapSamples;
+            circularBufferHi.Available = detectOverlapSamples;
         }
 
         /// <summary>
@@ -254,41 +254,41 @@ namespace Pitch
 
             while (samplesProcessed < srcLength)
             {
-                int frameCount = Math.Min(srcLength - samplesProcessed, m_pitchBufSize + m_detectOverlapSamples);
+                int frameCount = Math.Min(srcLength - samplesProcessed, pitchBufSize + detectOverlapSamples);
 
-                m_iirFilterLoLo.FilterBuffer(inBuffer, samplesProcessed, m_pitchBufLo, 0, frameCount);
-                m_iirFilterLoHi.FilterBuffer(m_pitchBufLo, 0, m_pitchBufLo, 0, frameCount);
+                iirFilterLoLo.FilterBuffer(inBuffer, samplesProcessed, pitchBufLo, 0, frameCount);
+                iirFilterLoHi.FilterBuffer(pitchBufLo, 0, pitchBufLo, 0, frameCount);
 
-                m_iirFilterHiLo.FilterBuffer(inBuffer, samplesProcessed, m_pitchBufHi, 0, frameCount);
-                m_iirFilterHiHi.FilterBuffer(m_pitchBufHi, 0, m_pitchBufHi, 0, frameCount);
+                iirFilterHiLo.FilterBuffer(inBuffer, samplesProcessed, pitchBufHi, 0, frameCount);
+                iirFilterHiHi.FilterBuffer(pitchBufHi, 0, pitchBufHi, 0, frameCount);
 
-                m_circularBufferLo.WriteBuffer(m_pitchBufLo, frameCount);
-                m_circularBufferHi.WriteBuffer(m_pitchBufHi, frameCount);
+                circularBufferLo.WriteBuffer(pitchBufLo, frameCount);
+                circularBufferHi.WriteBuffer(pitchBufHi, frameCount);
 
                 // Loop while there is enough samples in the circular buffer
-                while (m_circularBufferLo.ReadBuffer(m_pitchBufLo, m_curPitchSamplePos, m_pitchBufSize + m_detectOverlapSamples))
+                while (circularBufferLo.ReadBuffer(pitchBufLo, curPitchSamplePos, pitchBufSize + detectOverlapSamples))
                 {
                     float pitch1;
                     float pitch2 = 0.0f;
                     float detectedPitch = 0.0f;
 
-                    m_circularBufferHi.ReadBuffer(m_pitchBufHi, m_curPitchSamplePos, m_pitchBufSize + m_detectOverlapSamples);
+                    circularBufferHi.ReadBuffer(pitchBufHi, curPitchSamplePos, pitchBufSize + detectOverlapSamples);
 
-                    pitch1 = m_dsp.DetectPitch(m_pitchBufLo, m_pitchBufHi, m_pitchBufSize);
+                    pitch1 = dsp.DetectPitch(pitchBufLo, pitchBufHi, pitchBufSize);
 
                     if (pitch1 > 0.0f)
                     {
                         // Shift the buffers left by the overlapping amount
-                        m_pitchBufLo.Copy(m_pitchBufLo, m_detectOverlapSamples, 0, m_pitchBufSize);
-                        m_pitchBufHi.Copy(m_pitchBufHi, m_detectOverlapSamples, 0, m_pitchBufSize);
+                        pitchBufLo.Copy(pitchBufLo, detectOverlapSamples, 0, pitchBufSize);
+                        pitchBufHi.Copy(pitchBufHi, detectOverlapSamples, 0, pitchBufSize);
 
-                        pitch2 = m_dsp.DetectPitch(m_pitchBufLo, m_pitchBufHi, m_pitchBufSize);
+                        pitch2 = dsp.DetectPitch(pitchBufLo, pitchBufHi, pitchBufSize);
 
                         if (pitch2 > 0.0f)
                         {
                             float fDiff = Math.Max(pitch1, pitch2) / Math.Min(pitch1, pitch2) - 1.0f;
 
-                            if (fDiff < m_maxOverlapDiff)
+                            if (fDiff < maxOverlapDiff)
                                 detectedPitch = (pitch1 + pitch2) * 0.5f;
                         }
                     }
@@ -296,8 +296,8 @@ namespace Pitch
                     // Log the pitch record
                     AddPitchRecord(detectedPitch);
 
-                    m_curPitchSamplePos += m_samplesPerPitchBlock;
-                    m_curPitchIndex++;
+                    curPitchSamplePos += samplesPerPitchBlock;
+                    curPitchIndex++;
                 }
 
                 samplesProcessed += frameCount;
@@ -309,49 +309,49 @@ namespace Pitch
         /// </summary>
         private void Setup()
         {
-            if (m_sampleRate < 1.0f)
+            if (sampleRate < 1.0f)
                 return;
 
-            m_dsp = new PitchDsp(m_sampleRate, kMinFreq, kMaxFreq, m_detectLevelThreshold);
+            dsp = new PitchDsp(sampleRate, kMinFreq, kMaxFreq, detectLevelThreshold);
 
-            m_iirFilterLoLo = new IIRFilter();
-            m_iirFilterLoLo.Proto = IIRFilter.ProtoType.Butterworth;
-            m_iirFilterLoLo.Type = IIRFilter.FilterType.HP;
-            m_iirFilterLoLo.Order = 5;
-            m_iirFilterLoLo.FreqLow = 45.0f;
-            m_iirFilterLoLo.SampleRate = (float)m_sampleRate;
+            iirFilterLoLo = new IIRFilter();
+            iirFilterLoLo.Proto = IIRFilter.ProtoType.Butterworth;
+            iirFilterLoLo.Type = IIRFilter.FilterType.HP;
+            iirFilterLoLo.Order = 5;
+            iirFilterLoLo.FreqLow = 45.0f;
+            iirFilterLoLo.SampleRate = (float)sampleRate;
 
-            m_iirFilterLoHi = new IIRFilter();
-            m_iirFilterLoHi.Proto = IIRFilter.ProtoType.Butterworth;
-            m_iirFilterLoHi.Type = IIRFilter.FilterType.LP;
-            m_iirFilterLoHi.Order = 5;
-            m_iirFilterLoHi.FreqHigh = 280.0f;
-            m_iirFilterLoHi.SampleRate = (float)m_sampleRate;
+            iirFilterLoHi = new IIRFilter();
+            iirFilterLoHi.Proto = IIRFilter.ProtoType.Butterworth;
+            iirFilterLoHi.Type = IIRFilter.FilterType.LP;
+            iirFilterLoHi.Order = 5;
+            iirFilterLoHi.FreqHigh = 280.0f;
+            iirFilterLoHi.SampleRate = (float)sampleRate;
 
-            m_iirFilterHiLo = new IIRFilter();
-            m_iirFilterHiLo.Proto = IIRFilter.ProtoType.Butterworth;
-            m_iirFilterHiLo.Type = IIRFilter.FilterType.HP;
-            m_iirFilterHiLo.Order = 5;
-            m_iirFilterHiLo.FreqLow = 45.0f;
-            m_iirFilterHiLo.SampleRate = (float)m_sampleRate;
+            iirFilterHiLo = new IIRFilter();
+            iirFilterHiLo.Proto = IIRFilter.ProtoType.Butterworth;
+            iirFilterHiLo.Type = IIRFilter.FilterType.HP;
+            iirFilterHiLo.Order = 5;
+            iirFilterHiLo.FreqLow = 45.0f;
+            iirFilterHiLo.SampleRate = (float)sampleRate;
 
-            m_iirFilterHiHi = new IIRFilter();
-            m_iirFilterHiHi.Proto = IIRFilter.ProtoType.Butterworth;
-            m_iirFilterHiHi.Type = IIRFilter.FilterType.LP;
-            m_iirFilterHiHi.Order = 5;
-            m_iirFilterHiHi.FreqHigh = 1500.0f;
-            m_iirFilterHiHi.SampleRate = (float)m_sampleRate;
+            iirFilterHiHi = new IIRFilter();
+            iirFilterHiHi.Proto = IIRFilter.ProtoType.Butterworth;
+            iirFilterHiHi.Type = IIRFilter.FilterType.LP;
+            iirFilterHiHi.Order = 5;
+            iirFilterHiHi.FreqHigh = 1500.0f;
+            iirFilterHiHi.SampleRate = (float)sampleRate;
 
-            m_detectOverlapSamples = (int)(kDetectOverlapSec * m_sampleRate);
-            m_maxOverlapDiff = kMaxOctaveSecRate * kDetectOverlapSec;
+            detectOverlapSamples = (int)(kDetectOverlapSec * sampleRate);
+            maxOverlapDiff = kMaxOctaveSecRate * kDetectOverlapSec;
 
-            m_pitchBufSize = (int)(((1.0f / (float)kMinFreq) * 2.0f + ((kAvgCount - 1) * kAvgOffset)) * m_sampleRate) + 16;
-            m_pitchBufLo = new float[m_pitchBufSize + m_detectOverlapSamples];
-            m_pitchBufHi = new float[m_pitchBufSize + m_detectOverlapSamples];
-            m_samplesPerPitchBlock = (int)Math.Round(m_sampleRate / m_pitchRecordsPerSecond); 
+            pitchBufSize = (int)(((1.0f / (float)kMinFreq) * 2.0f + ((kAvgCount - 1) * kAvgOffset)) * sampleRate) + 16;
+            pitchBufLo = new float[pitchBufSize + detectOverlapSamples];
+            pitchBufHi = new float[pitchBufSize + detectOverlapSamples];
+            samplesPerPitchBlock = (int)Math.Round(sampleRate / pitchRecordsPerSecond); 
 
-            m_circularBufferLo = new CircularBuffer<float>((int)(kCircularBufSaveTime * m_sampleRate + 0.5f) + 10000);
-            m_circularBufferHi = new CircularBuffer<float>((int)(kCircularBufSaveTime * m_sampleRate + 0.5f) + 10000);
+            circularBufferLo = new CircularBuffer<float>((int)(kCircularBufSaveTime * sampleRate + 0.5f) + 10000);
+            circularBufferHi = new CircularBuffer<float>((int)(kCircularBufSaveTime * sampleRate + 0.5f) + 10000);
         }
 
         /// <summary>
@@ -367,19 +367,19 @@ namespace Pitch
 
             var record = new PitchRecord();
 
-            record.RecordIndex = m_curPitchIndex;
+            record.RecordIndex = curPitchIndex;
             record.Pitch = pitch;
             record.MidiNote = midiNote;
             record.MidiCents = midiCents;
 
-            m_curPitchRecord = record;
+            curPitchRecord = record;
 
-            if (m_recordPitchRecords)
+            if (recordPitchRecords)
             {
-                if (m_pitchRecordHistorySize > 0 && m_pitchRecords.Count >= m_pitchRecordHistorySize)
-                    m_pitchRecords.RemoveAt(0);
+                if (pitchRecordHistorySize > 0 && pitchRecords.Count >= pitchRecordHistorySize)
+                    pitchRecords.RemoveAt(0);
 
-                m_pitchRecords.Add(record);
+                pitchRecords.Add(record);
             }
             
             if (this.PitchDetected != null)

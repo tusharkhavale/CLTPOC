@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Temporary class
 public class AnalyticsManager : MonoBehaviour {
 
 	static float cummulativeTime;
