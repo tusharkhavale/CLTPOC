@@ -16,7 +16,7 @@ public class TitleScreen : MonoBehaviour {
 	IEnumerator WaitForTitle()
 	{
 		yield return new WaitForSeconds (2f);
-		GameController.gameController.uiManager.UIScreenTransition (EScreen.NameEntry);
+		GameController.gameController.ScreenTransition(EScreen.NameEntry);
 	}
 
 }

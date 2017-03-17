@@ -15,24 +15,7 @@ public enum EScreen
 
 public class UIManager : MonoBehaviour {
 
-	private static UIManager instance;
 	private EScreen currScreen = EScreen.Title;
-
-
-	public static UIManager GetInstance()
-	{
-		if (instance != null) 
-		{
-			return instance;
-		}
-		return null;
-	}
-
-	void Awake()
-	{
-		instance = this;
-	}
-
 
 	/// <summary>
 	/// Gets or sets the curr screen.

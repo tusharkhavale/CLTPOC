@@ -18,12 +18,14 @@ public class NameEntryScreen : MonoBehaviour {
 		CheckIfNewUser ();
 	}
 
+	// Check if new user
 	void CheckIfNewUser()
 	{
-		if (string.IsNullOrEmpty (PlayerPrefsManager.GetInstance ().PlayerName))
+		string name = GameController.gameController.ppManager.PlayerName;
+		if (string.IsNullOrEmpty(name))
 			ShowNewUserUI ();
 		else
-			ShowOldUSerUI ();
+			ShowOldUserUI ();
 	}
 
 	void ShowNewUserUI()
@@ -35,11 +37,11 @@ public class NameEntryScreen : MonoBehaviour {
 		goButton.SetActive (false);
 	}
 
-	void ShowOldUSerUI()
+	void ShowOldUserUI()
 	{
 		changeUserButton.SetActive (true);
 		welcomeUserText.gameObject.SetActive (true);
-		welcomeUserText.text = "Hello " + PlayerPrefsManager.GetInstance ().PlayerName;
+		welcomeUserText.text = "Hello " + GameController.gameController.ppManager.PlayerName;
 		goButton.SetActive (true);
 		inputName.gameObject.SetActive (false);
 		enterNameText.SetActive (false);
@@ -49,7 +51,7 @@ public class NameEntryScreen : MonoBehaviour {
 
 	public void OnChangeUser()
 	{
-		PlayerPrefsManager.GetInstance ().PlayerName = "";
+		GameController.gameController.ppManager.PlayerName = "";
 		ShowNewUserUI ();
 	}
 
@@ -73,9 +75,9 @@ public class NameEntryScreen : MonoBehaviour {
 	public void OnClickNext()
 	{
 		if(!string.IsNullOrEmpty(inputName.text))
-			PlayerPrefsManager.GetInstance ().PlayerName = inputName.text;
+			GameController.gameController.ppManager.PlayerName = inputName.text;
 
-			GameController.gameController.uiManager.UIScreenTransition (EScreen.SelectGame);
+		GameController.gameController.ScreenTransition (EScreen.SelectGame);
 	}
 
 

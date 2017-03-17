@@ -6,7 +6,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{DF177BF7-49BA-BD50-22D0-994D8125F4E9}</ProjectGuid>
+    <ProjectGuid>{03C3D684-506A-419E-50CC-60A894F38C69}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -46,20 +46,29 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Scripts\AudioVisualizer.cs" />
-     <Compile Include="Assets\Scripts\ChakraLongTone.cs" />
-     <Compile Include="Assets\Scripts\GameController.cs" />
-     <Compile Include="Assets\Scripts\MicrophoneInput.cs" />
-     <Compile Include="Assets\Scripts\PitchTracker.cs" />
-     <Compile Include="Assets\Scripts\PlayerPrefsManager.cs" />
-     <Compile Include="Assets\Scripts\PlayerProfile.cs" />
-     <Compile Include="Assets\Scripts\SceneManager.cs" />
+     <Compile Include="Assets\Scripts\CLTGame\ChakraLongTone.cs" />
+     <Compile Include="Assets\Scripts\Managers\AnalyticsManager.cs" />
+     <Compile Include="Assets\Scripts\Managers\GameController.cs" />
+     <Compile Include="Assets\Scripts\Managers\PlayerPrefsManager.cs" />
+     <Compile Include="Assets\Scripts\Managers\SceneManager.cs" />
+     <Compile Include="Assets\Scripts\Player\PlayerProfile.cs" />
+     <Compile Include="Assets\Scripts\UI\AudioVisualizer.cs" />
+     <Compile Include="Assets\Scripts\UI\FPSDisplay.cs" />
      <Compile Include="Assets\Scripts\UI\Loading.cs" />
      <Compile Include="Assets\Scripts\UI\NameEntryScreen.cs" />
      <Compile Include="Assets\Scripts\UI\SelectGameScreen.cs" />
      <Compile Include="Assets\Scripts\UI\TitleScreen.cs" />
      <Compile Include="Assets\Scripts\UI\UIManager.cs" />
-     <None Include="Assets\Shaders\SpriteGradient.shader" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\AudioConstants.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\AudioDSP.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\AudioManager.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\CircularBuffer.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\Extensions.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\FrequencyMapping.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\IIRFilter.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\InputManager.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\PitchDsp.cs" />
+     <Compile Include="Assets\UnityPitchControl\Pitch\PitchTracker.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity5_4_1/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>

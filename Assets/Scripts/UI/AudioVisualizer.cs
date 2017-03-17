@@ -4,37 +4,43 @@ using UnityEngine;
 
 public class AudioVisualizer : MonoBehaviour {
 
-	private static AudioVisualizer instance;
-	Transform[] spectrumObjects;
+	private Transform[] spectrumObjects;
 	[Range(1, 100)] public float barMagnitude;
-	public float interpolant  = 1;
+	public float interpolant  = 0.1f;
 
-	public static AudioVisualizer GetInstance()
-	{
-		if (instance != null) 
-		{
-			return instance;
-		}
-		return null;
-	}
-
-	void Awake()
-	{
-		instance = this;
-	}
-
+	/// <summary>
+	/// Get transform of all child objects.
+	/// Subscribe to spectrum data event
+	/// </summary>
 	void Start()
 	{
 		spectrumObjects = new Transform[transform.childCount];
 		for (int i = 0; i < transform.childCount; i++)
 			spectrumObjects[i] = transform.GetChild (i);
+
+		AddSpectrumDataDelegate ();
 	}
 
-	public void UpdateVisualizer(float[] spectrum)
+	// Subscribing and Unsubscribing to events
+	void AddSpectrumDataDelegate()
+	{
+		GameController.gameController.audioManager.AddSpectrumDataDelegate (this.OnSpectrumDataReceived);
+	}
+
+	void RemoveSpectrumDataDelegate()
+	{
+		GameController.gameController.audioManager.RemoveSpectrumDataDelegate (this.OnSpectrumDataReceived);
+	}
+
+	/// <summary>
+	/// Raises the spectrum data received event.
+	/// Updates the spectrum object's Y scale
+	/// </summary>
+	/// <param name="spectrum">Spectrum.</param>
+	public void OnSpectrumDataReceived(float[] spectrum)
 	{
 		for(int i = 0; i < spectrumObjects.Length; i++)
 		{
-
 			// apply height multiplier to intensity
 			float intensity = spectrum[i] * barMagnitude;
 
@@ -45,6 +51,12 @@ public class AudioVisualizer : MonoBehaviour {
 			// appply new scale to object
 			spectrumObjects[i].localScale = newScale;
 		}
+	}
+
+	// Remove delegate on destroy
+	void OnDestroy()
+	{
+		RemoveSpectrumDataDelegate ();
 	}
 
 }

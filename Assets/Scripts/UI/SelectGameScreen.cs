@@ -10,7 +10,7 @@ public class SelectGameScreen : MonoBehaviour {
 	/// </summary>
 	public void OnClickGame()
 	{
-		GameController.gameController.uiManager.UIScreenTransition (EScreen.Game);
+		GameController.gameController.ScreenTransition(EScreen.Game);
 	}
 
 	/// <summary>
@@ -19,8 +19,6 @@ public class SelectGameScreen : MonoBehaviour {
 	public void OnClickAnalytics()
 	{
 		transform.FindChild ("Analytics").gameObject.SetActive (true);
-		transform.FindChild ("Analytics").GetComponentInChildren<Text> ().text = AnalyticsManager.GetInstance ().GetSessionLog ();
+		transform.FindChild ("Analytics").GetComponentInChildren<Text> ().text = GameController.gameController.analyticsManager.GetSessionLog ();
 	}
-
-
 }

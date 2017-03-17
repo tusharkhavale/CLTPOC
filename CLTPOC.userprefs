@@ -1,0 +1,20 @@
+﻿<Properties StartupItem="Assembly-CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\UnityPitchControl\Pitch\AudioDSP.cs">
+    <Files>
+      <File FileName="Assets\Scripts\Managers\GameController.cs" Line="11" Column="24" />
+      <File FileName="Assets\Scripts\UI\UIManager.cs" Line="16" Column="41" />
+      <File FileName="Assets\Scripts\CLTGame\ChakraLongTone.cs" Line="1" Column="1" />
+      <File FileName="Assets\UnityPitchControl\Pitch\AudioDSP.cs" Line="99" Column="78" />
+      <File FileName="..\Unity Audio\TestHappyFace\Assets\Scripts\AudioDSP.cs" Line="93" Column="31" />
+      <File FileName="..\Unity Audio\TestHappyFace\Assets\Scripts\AudioHandler.cs" Line="7" Column="44" />
+      <File FileName="Assets\UnityPitchControl\Pitch\AudioManager.cs" Line="133" Column="3" />
+      <File FileName="Assets\UnityPitchControl\Pitch\PitchTracker.cs" Line="150" Column="1" />
+      <File FileName="Assets\UnityPitchControl\Pitch\AudioConstants.cs" Line="9" Column="40" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

@@ -5,7 +5,7 @@ using Pitch;
 using UnityEngine.UI;
 
 namespace UnityPitchControl.Input {
-	public sealed class InputManager : MonoBehaviour {
+		public sealed class InputManager : MonoBehaviour {
 		private static InputManager instance;
 		public String audioDevice = ""; // name of the audio device
 		public AudioClip micInput;
@@ -51,7 +51,7 @@ namespace UnityPitchControl.Input {
 			pitchTracker.PitchDetected += new PitchTracker.PitchDetectedHandler(PitchDetectedListener);
 			spectrumData = new float[binSize];
 			isPlaying = true;
-			AnalyticsManager.GetInstance ().SetStartRecordingTime ();
+//			AnalyticsManager.GetInstance ().SetStartRecordingTime ();
 		}
 
 		/// <summary>
@@ -69,7 +69,6 @@ namespace UnityPitchControl.Input {
 			micInput.GetData(samples, 0);
 			audioPlayer.GetSpectrumData (spectrumData, 0, FFTWindow.BlackmanHarris);
 			FindPeakHarmonic ();
-			AudioVisualizer.GetInstance ().UpdateVisualizer (spectrumData);
 			pitchTracker.ProcessBuffer(samples);
 				
 		}
@@ -91,8 +90,8 @@ namespace UnityPitchControl.Input {
 				}
 			}
 
-			if (bin > 0.0009)
-				AnalyticsManager.GetInstance().AudioInputDetected();
+//			if (bin > 0.0009)
+//				AnalyticsManager.GetInstance().AudioInputDetected();
 
 			float maxV = spectrumData[index];
 			int maxN = index;
@@ -115,7 +114,7 @@ namespace UnityPitchControl.Input {
 		{
 			isPlaying = false;
 			Microphone.End(audioDevice);
-			AnalyticsManager.GetInstance ().EndRecordingTime();
+//			AnalyticsManager.GetInstance ().EndRecordingTime();
 		}
 
 		/// <summary>
@@ -146,21 +145,21 @@ namespace UnityPitchControl.Input {
 					lowestPitch = p;
 			}
 
-			// Check against spectral pitch
+//			 Check against spectral pitch
 			if(lowestPitch == 0)
 			lowestPitch = spectralPitch > 3000 ? (int)spectralPitch : lowestPitch; 
 
-			// Render pitch and Frequency on screen
+//			 Render pitch and Frequency on screen
 			txtFrequency.text = lowestPitch +" Hz";
-			txtPitch.text = FrequencyMapping.GetInstance().GetNote(lowestPitch);
+//			txtPitch.text = FrequencyMapping.GetInstance().GetNote(lowestPitch);
 				
 			// calculate fundamental frequency bin
 			float freqN = lowestPitch * binSize*2f/sampleRate;
 			int index = (int)freqN;     // Not using Matf.RoundToInt because lower int value required and not nearest
-			if (pitch != 0)
-				ChakraLongTone.GetInstance ().UpdateChakras (GetHarmoicsAmplitude (spectrumData, index, 0, 7));  
-			else
-				ChakraLongTone.GetInstance ().NormalizeChakras ();		
+//			if (pitch != 0)
+//				ChakraLongTone.GetInstance ().UpdateChakras (GetHarmoicsAmplitude (spectrumData, index, 0, 7));  
+//			else
+//				ChakraLongTone.GetInstance ().NormalizeChakras ();		
 		}
 
 

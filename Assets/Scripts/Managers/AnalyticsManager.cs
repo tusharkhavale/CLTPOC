@@ -20,21 +20,6 @@ public class AnalyticsManager : MonoBehaviour {
 	static float recordingstartedTime;
 
 
-	private static AnalyticsManager instance;
-	public static AnalyticsManager GetInstance()
-	{
-		if (instance != null) 
-		{
-			return instance;
-		}
-		return null;
-	}
-
-	void Awake()
-	{
-		instance = this;
-	}
-
 	void Start()
 	{
 		GetAudioInputLog ();

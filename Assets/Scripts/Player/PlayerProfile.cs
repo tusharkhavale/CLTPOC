@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerProfile : MonoBehaviour 
+public class PlayerProfile 
 {
-	public string name;
+	public string playerName;
 }

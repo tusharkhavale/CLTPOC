@@ -5,29 +5,43 @@ using UnityEngine;
 public class GameController : MonoBehaviour {
 
 	public static GameController gameController;
-
-	[HideInInspector]
 	public UIManager uiManager;
-	[HideInInspector]
 	public PlayerPrefsManager ppManager;
-	[HideInInspector]
-	public SceneManager sceneManager;
+	public AnalyticsManager analyticsManager;
+	// Assign in inspector
+	public AudioManager audioManager;
+	public AudioDSP audioDSP;
 
 	void Awake()
 	{
 		gameController = this;
 	}
 
-	/// <summary>
-	/// Get all manager Instances.
-	/// </summary>
-	void Start()
+	// Audio related functions
+	public void StartMicrophoneRecording()
 	{
-		uiManager = UIManager.GetInstance ();
-		ppManager = PlayerPrefsManager.GetInstance ();
-		sceneManager = SceneManager.GetInstance ();
+		audioManager.StartMicrophone ();
 	}
 
+	public void EndMicrophoneRecording()
+	{
+		audioManager.StopMicrophone ();
+	}
 
+	public void StartPictDetection()
+	{
+		audioDSP.InitializePitchTracker ();
+	}
+
+	public void EndPitchDetection()
+	{
+		audioDSP.EndPitchTracking ();
+	}
+
+	// UI related functions
+	public void ScreenTransition(EScreen screen)
+	{
+		uiManager.UIScreenTransition (screen);
+	}
 
 }
