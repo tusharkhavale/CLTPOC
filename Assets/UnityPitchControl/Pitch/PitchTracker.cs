@@ -20,7 +20,7 @@ namespace Pitch
         private const float kMaxOctaveSecRate = 10.0f;
 
         private const float kAvgOffset = 0.005f;	        // time offset between pitch averaging values
-        private const int kAvgCount = 1;			        // number of average pitch samples to take
+        private const float kAvgCount = 1;			        // number of average pitch samples to take
         private const float kCircularBufSaveTime = 1.0f;    // Amount of samples to store in the history buffer
 
         private PitchDsp dsp;
@@ -279,8 +279,8 @@ namespace Pitch
                     if (pitch1 > 0.0f)
                     {
                         // Shift the buffers left by the overlapping amount
-                        pitchBufLo.Copy(pitchBufLo, detectOverlapSamples, 0, pitchBufSize);
-                        pitchBufHi.Copy(pitchBufHi, detectOverlapSamples, 0, pitchBufSize);
+						pitchBufLo.Copy(pitchBufLo, detectOverlapSamples, 0, (int)pitchBufSize);
+						pitchBufHi.Copy(pitchBufHi, detectOverlapSamples, 0, (int)pitchBufSize);
 
                         pitch2 = dsp.DetectPitch(pitchBufLo, pitchBufHi, pitchBufSize);
 

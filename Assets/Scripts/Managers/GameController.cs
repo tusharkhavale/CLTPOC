@@ -5,10 +5,10 @@ using UnityEngine;
 public class GameController : MonoBehaviour {
 
 	public static GameController gameController;
+	// Assign in inspector
 	public UIManager uiManager;
 	public PlayerPrefsManager ppManager;
 	public AnalyticsManager analyticsManager;
-	// Assign in inspector
 	public AudioManager audioManager;
 	public AudioDSP audioDSP;
 
@@ -17,7 +17,8 @@ public class GameController : MonoBehaviour {
 		gameController = this;
 	}
 
-	// Audio related functions
+
+	// Audio Manager functions
 	public void StartMicrophoneRecording()
 	{
 		audioManager.StartMicrophone ();
@@ -28,6 +29,18 @@ public class GameController : MonoBehaviour {
 		audioManager.StopMicrophone ();
 	}
 
+	public void SetAudioDataTrigger(bool value)
+	{
+		audioManager.SetAudioDataTrigger (value);
+	}
+
+	public void SetSpectrumDataTrigger(bool value)
+	{
+		audioManager.SetSpectrumDataTrigger (value);
+	}
+
+
+	// AudioDSP functions
 	public void StartPictDetection()
 	{
 		audioDSP.InitializePitchTracker ();
@@ -37,6 +50,22 @@ public class GameController : MonoBehaviour {
 	{
 		audioDSP.EndPitchTracking ();
 	}
+
+	public void StartHarmonicsCalculation()
+	{
+		audioDSP.StartHarmonicsCalculation ();
+	}
+
+	public void EndHarmonicsCalculation()
+	{
+		audioDSP.EndHarmonicsCalculation();
+	}
+
+	public void StartNoiseCeilingCalibration()
+	{
+		audioDSP.StartNoiseCeilingCalibration ();
+	}
+
 
 	// UI related functions
 	public void ScreenTransition(EScreen screen)

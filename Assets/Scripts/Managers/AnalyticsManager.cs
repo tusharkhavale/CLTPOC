@@ -16,22 +16,40 @@ public class AnalyticsManager : MonoBehaviour {
 	static float silenceTime;
 	static float audioInputTime;
 	public static bool audioInputAvalable;
-
 	static float recordingstartedTime;
 
 
+
+	/// <summary>
+	/// Load logs from prefs.
+	/// Subscribe to events
+	/// </summary>
 	void Start()
 	{
-		GetAudioInputLog ();
+		LoadAudioInputLog ();
+		AddDelegates ();
 	}
 
+	//Subscribe to events
+	private void AddDelegates()
+	{
+		GameController.gameController.audioManager.AddRecordingStartedDelegate (this.OnRecordingStarted);
+		GameController.gameController.audioManager.AddRecordingEndedDelegate(this.OnRecordingEnded);
+		GameController.gameController.audioDSP.AddInputSoundDetectedDelegate (this.OnInputSoundDetected);
+	}
+
+	/// <summary>
+	/// Raises the application quit event.
+	/// </summary>
 	void OnApplicationQuit()
 	{
 		SaveSessionLog ();
 	}
 
-
-	void SaveSessionLog()
+	/// <summary>
+	/// Saves the session log on exit.
+	/// </summary>
+	private void SaveSessionLog()
 	{
 		cummulativeTime = PlayerPrefs.GetFloat ("cummulativeTime") + Time.time;
 		PlayerPrefs.SetFloat ("cummulativeTime", cummulativeTime);
@@ -43,16 +61,23 @@ public class AnalyticsManager : MonoBehaviour {
 		PlayerPrefs.SetInt("totalInputs",totalInputs);
 	}
 
-	void GetAudioInputLog()
+	/// <summary>
+	/// Loads the audio input log from prefs.
+	/// </summary>
+	private void LoadAudioInputLog()
 	{
 		cummulativeAudioInputTime = PlayerPrefs.GetFloat ("cummulativeAudioInputTime");
 		totalInputs = PlayerPrefs.GetInt("totalInputs");
 	}
 
+	/// <summary>
+	/// Gets the session log.
+	/// </summary>
+	/// <returns>The session log.</returns>
 	public string GetSessionLog()
 	{
 		float avgSessionTime = PlayerPrefs.GetFloat ("cummulativeTime") / PlayerPrefs.GetInt ("totalSessions");
-		float avgInputDelay = cummulativeAudioInputTime/ totalInputs;
+		float avgInputDelay = (recordingTime-cummulativeAudioInputTime)/ totalInputs;
 
 		string log = "Average Session Time : " + avgSessionTime + "s\n"
 		             + " Total Sessions : " + PlayerPrefs.GetInt ("totalSessions") + "\n"
@@ -62,50 +87,37 @@ public class AnalyticsManager : MonoBehaviour {
 		return log;
 	}
 
-	public void SetStartRecordingTime()
+	/// <summary>
+	/// Raises the recording started event.
+	/// Set recording started time
+	/// </summary>
+	private void OnRecordingStarted()
 	{
 		recordingstartedTime = Time.time;
 		silenceTime = Time.time;
 	}
 
-	public void EndRecordingTime()
+	/// <summary>
+	/// Raises the recording ended event.
+	/// Calculates recording time
+	/// </summary>
+	private void OnRecordingEnded()
 	{
-		recordingTime = Time.time - recordingstartedTime;
+		recordingTime += Time.time - recordingstartedTime;
 	}
 
-	public void AudioInputDetected()
+	/// <summary>
+	/// Raises the input sound detected event.
+	/// </summary>
+	private void OnInputSoundDetected()
 	{
-		if (audioInputAvalable)
-			return;
-		
-		cummulativeAudioInputTime = Time.time - silenceTime;
-		totalInputs++;
-
-		StartCoroutine (StartAudioInputTimer ());
-		audioInputAvalable = true;
-	}
-
-	IEnumerator StartAudioInputTimer()
-	{
-		while (audioInputAvalable) 
+		cummulativeAudioInputTime += Time.deltaTime;
+		if (silenceTime < Time.time - 0.1f) 
 		{
-			yield return new WaitForSeconds (2.0f);	
+			totalInputs++;
 		}
-
-		audioInputAvalable = false;
 		silenceTime = Time.time;
 	}
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

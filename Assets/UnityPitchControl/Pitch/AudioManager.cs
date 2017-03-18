@@ -4,16 +4,14 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour {
 	private AudioSource audioSource;
-	private int audioBufferSize = 1024;
-	private int spectrumSize = 1024;
-	private int sampleRate = 44100;
+	private int audioBufferSize;
+	private int spectrumSize;
+	private int sampleRate;
 	private float[] spectrumData;
 	private float[] audioOutputData;
 	private float[] rawAudioData;
 	private bool getAudioData;
-
-	private bool noteWasSounding = false;
-	private bool initialized = false;
+	private bool getSpectrumData;
 
 	// Events and Delegates
 	public delegate void SpectrumDataDelegate(float[] spectrumData);
@@ -24,6 +22,12 @@ public class AudioManager : MonoBehaviour {
 
 	public delegate void RawAudioDataDelegate(float[] rawAudioData);
 	private event RawAudioDataDelegate rawAudioDataEvent;
+
+	public delegate void RecordingStartedDelegate();
+	private event RecordingStartedDelegate recordingStartedEvent;
+
+	public delegate void RecordingEndedDelegate();
+	private event RecordingEndedDelegate recordingEndedEvent;
 
 	// Subscribing and unsubscribing to events
 	public void AddSpectrumDataDelegate(SpectrumDataDelegate del)
@@ -56,6 +60,26 @@ public class AudioManager : MonoBehaviour {
 		rawAudioDataEvent -= del;
 	}
 
+	public void AddRecordingStartedDelegate(RecordingStartedDelegate del)
+	{
+		recordingStartedEvent += del;
+	}
+
+	public void RemoveRecordingStartedDelegate(RecordingStartedDelegate del)
+	{
+		recordingStartedEvent -= del;
+	}
+
+	public void AddRecordingEndedDelegate(RecordingEndedDelegate del)
+	{
+		recordingEndedEvent += del;
+	}
+
+	public void RemoveRecordingEndedDelegate(RecordingEndedDelegate del)
+	{
+		recordingEndedEvent -= del;
+	}
+
 	/// <summary>
 	/// Initialize variables on start.
 	/// </summary>
@@ -70,12 +94,14 @@ public class AudioManager : MonoBehaviour {
 	/// </summary>
 	void InitVariables()
 	{
-		audioSource = GetComponent<AudioSource> ();
-		spectrumData = new float[spectrumSize];
-		audioOutputData = new float[audioBufferSize];
 		audioBufferSize = AudioConstants.audioBufferSize;
 		spectrumSize = AudioConstants.spectrumSize;
 		sampleRate = AudioConstants.sampleRate;
+
+		audioSource = GetComponent<AudioSource> ();
+		spectrumData = new float[spectrumSize];
+		audioOutputData = new float[audioBufferSize];
+		rawAudioData = new float[audioBufferSize];
 	}
 
 	/// <summary>
@@ -86,7 +112,6 @@ public class AudioManager : MonoBehaviour {
 		audioSource.clip = Microphone.Start (null, true, 1, sampleRate);
 		audioSource.Play();
 		audioSource.loop = true;
-		GetAudioData (true);
 	}
 
 	/// <summary>
@@ -94,20 +119,30 @@ public class AudioManager : MonoBehaviour {
 	/// </summary>
 	public void StopMicrophone()
 	{
-		GetAudioData (false);
 		Microphone.End (null);
 		audioSource.Stop (); 
 		audioSource.clip = null;
 	}
 
 	/// <summary>
-	/// Trigggers the audio data retriving action
+	/// Toggle the audio data retrieving action
 	/// </summary>
 	/// <param name="value">If set to <c>true</c> value.</param>
-	public void GetAudioData(bool value)
+	public void SetAudioDataTrigger(bool value)
 	{
 		getAudioData = value;
 	}
+
+	/// <summary>
+	/// Toggle the spectrum data retrieving action
+	/// </summary>
+	/// <param name="value">If set to <c>true</c> value.</param>
+	public void SetSpectrumDataTrigger(bool value)
+	{
+		getSpectrumData = value;
+	}
+
+
 
 	/// <summary>
 	/// Get Spectrum data and Output data from AudioSource
@@ -115,20 +150,26 @@ public class AudioManager : MonoBehaviour {
 	/// </summary>
 	void Update()
 	{
+		// Get audio output data
 		if(getAudioData) 
 		{
 			audioSource.clip.GetData(audioOutputData,0);
-			audioSource.GetSpectrumData(spectrumData, 0, FFTWindow.BlackmanHarris);	
 			audioSource.GetOutputData (rawAudioData, 0);
-
-			if (spectrumDataEvent != null)
-				spectrumDataEvent (spectrumData);
 
 			if (outputDataEvent != null)
 				outputDataEvent (audioOutputData);
 
 			if (rawAudioDataEvent != null)
 				rawAudioDataEvent (rawAudioData);
+		}
+
+		// Get Spectrum data
+		if(getSpectrumData) 
+		{
+			audioSource.GetSpectrumData(spectrumData, 0, FFTWindow.BlackmanHarris);	
+
+			if (spectrumDataEvent != null)
+				spectrumDataEvent (spectrumData);
 		}
 	}
 }

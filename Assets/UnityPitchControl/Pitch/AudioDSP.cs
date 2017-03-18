@@ -5,7 +5,6 @@ using Pitch;
 
 public class AudioDSP : MonoBehaviour {
 
-	private static string audioDevice = ""; // name of the audio device
 	private PitchTracker pitchTracker;
 	public List<int> detectedPitches;
 	private int samplerate;
@@ -13,8 +12,11 @@ public class AudioDSP : MonoBehaviour {
 	private int currrentPitch;
 	public FrequencyMapping freqMapping;
 	private float noiseCeilingValue;
-	private float dbValue;
-	private float rmsValue;
+	private bool noiseCeilingCalibration;
+	public float dbValue;
+	public float rmsValue;
+	private float fudgeFactor = 1.21f; // gray area between velocity zones = 11%
+	private float noiseSensitivityFloor; 
 
 	// Events and delegates
 	public delegate void HarmonicsDataDelegate(float[] data);
@@ -22,6 +24,13 @@ public class AudioDSP : MonoBehaviour {
 
 	public delegate void PitchDetectedDelegate(int pitch);
 	private event PitchDetectedDelegate pitchDetectedEvent;
+
+	public delegate void InputSoundDetectedDelegate();
+	private event InputSoundDetectedDelegate inputSoundDetectedEvent;
+
+	public delegate void NoiseCalibratedDelegate();
+	private event NoiseCalibratedDelegate noiseCalibratedEvent;
+
 
 	// Subscribing and Unsubscribing to events
 	public void AddHarmonicsDataDelegate(HarmonicsDataDelegate del)
@@ -44,11 +53,37 @@ public class AudioDSP : MonoBehaviour {
 		pitchDetectedEvent -= del;
 	}
 
-	void Start()
+	public void AddInputSoundDetectedDelegate(InputSoundDetectedDelegate del)
 	{
-		
+		inputSoundDetectedEvent += del;
 	}
 
+	public void RemoveInputSoundDetectedDelegate(InputSoundDetectedDelegate del)
+	{
+		inputSoundDetectedEvent -= del;
+	}
+
+	public void AddNoiseCalibratedDelegate(NoiseCalibratedDelegate del)
+	{
+		noiseCalibratedEvent += del;
+	}
+
+	public void RemoveNoiseCalibratedDelegate(NoiseCalibratedDelegate del)
+	{
+		noiseCalibratedEvent -= del;
+	}
+
+	/// <summary>
+	/// Initialize variables on start.
+	/// </summary>
+	void Start()
+	{
+		InitVariables ();
+	}
+
+	/// <summary>
+	/// Initializes the variables.
+	/// </summary>
 	void InitVariables()
 	{
 		samplerate = AudioConstants.sampleRate;
@@ -80,22 +115,38 @@ public class AudioDSP : MonoBehaviour {
 	}
 
 	/// <summary>
+	/// Start harmonic data calculation
+	/// Subscribe to spectrum data events.
+	/// </summary>
+	public void StartHarmonicsCalculation()
+	{
+		GameController.gameController.audioManager.AddSpectrumDataDelegate (this.OnSpectrumDataReceived);
+	}
+
+	/// <summary>
+	/// End harmonic data calculation
+	/// Unsubscribe
+	/// </summary>
+	public void EndHarmonicsCalculation()
+	{
+		GameController.gameController.audioManager.RemoveSpectrumDataDelegate (this.OnSpectrumDataReceived);
+	}
+
+	/// <summary>
 	/// Subscribe to audio raw data events.
 	/// </summary>
-	void AddAudioDataDelgates()
+	private void AddAudioDataDelgates()
 	{
 		GameController.gameController.audioManager.AddAudioOutputDataDelegate(this.OnAudioOutputDataReceived);
-		GameController.gameController.audioManager.AddSpectrumDataDelegate (this.OnSpectrumDataReceived);
 		GameController.gameController.audioManager.AddRawAudioDataDelegate (this.OnRawAudioDataReceived);
 	}
 
 	/// <summary>
 	/// Unsubscribe 
 	/// </summary>
-	void RemoveAudioDataDelegates()
+	private void RemoveAudioDataDelegates()
 	{
 		GameController.gameController.audioManager.RemoveAudioOutputDataDelegate (this.OnAudioOutputDataReceived);
-		GameController.gameController.audioManager.RemoveSpectrumDataDelegate (this.OnSpectrumDataReceived);
 		GameController.gameController.audioManager.RemoveRawAudioDataDelegate (this.OnRawAudioDataReceived);
 	}
 
@@ -128,7 +179,7 @@ public class AudioDSP : MonoBehaviour {
 	/// <param name="peakBin">Peak bin.</param>
 	/// <param name="windowHalfLen">Window half length.</param>
 	/// <param name="harmonic">Harmonic.</param>
-	void CalculateHarmonicsAmplitude(float[] spectrum, int windowHalfLen, int harmonic)
+	private void CalculateHarmonicsAmplitude(float[] spectrum, int windowHalfLen, int harmonic)
 	{
 
 		float freqN = currrentPitch * spectrum.Length *2f/samplerate;
@@ -198,6 +249,47 @@ public class AudioDSP : MonoBehaviour {
 
 		rmsValue = Mathf.Sqrt (sumOfSquares / rawAudioData.Length);
 		dbValue = 20 * Mathf.Log10 (rmsValue / dbRefValue);
+
+		if (rmsValue > noiseSensitivityFloor && inputSoundDetectedEvent != null)
+			inputSoundDetectedEvent ();
 	}
 
+	/// <summary>
+	/// Starts the noise ceiling calibration.
+	/// </summary>
+	public void StartNoiseCeilingCalibration()
+	{
+		noiseCeilingCalibration = true;
+		StartCoroutine (CalibrateNoiseCeiling ());
+		StartCoroutine (EndNoiseCeilingCalibration ());
+	}
+
+	/// <summary>
+	/// Calibrates the noise ceiling value.
+	/// </summary>
+	/// <returns>The noise ceiling.</returns>
+	private IEnumerator CalibrateNoiseCeiling()
+	{
+		noiseCeilingValue = float.NegativeInfinity;
+		while (noiseCeilingCalibration) 
+		{
+			if (rmsValue > noiseCeilingValue)
+				noiseCeilingValue = rmsValue;
+			
+			yield return null;
+		}
+	}
+
+	/// <summary>
+	/// Ends the noise ceiling calibration.
+	/// </summary>
+	/// <returns>The noise ceiling calibration.</returns>
+	private IEnumerator EndNoiseCeilingCalibration()
+	{
+		yield return new WaitForSeconds (2.0f);
+		noiseCeilingCalibration = false;
+		noiseSensitivityFloor = noiseCeilingValue * fudgeFactor;
+		if(noiseCalibratedEvent != null)
+			noiseCalibratedEvent ();
+	}
 }
