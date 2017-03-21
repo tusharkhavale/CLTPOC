@@ -77,7 +77,7 @@ public class AnalyticsManager : MonoBehaviour {
 	public string GetSessionLog()
 	{
 		float avgSessionTime = PlayerPrefs.GetFloat ("cummulativeTime") / PlayerPrefs.GetInt ("totalSessions");
-		float avgInputDelay = (recordingTime-cummulativeAudioInputTime)/ totalInputs;
+		float avgInputDelay = (recordingTime-audioInputTime)/ totalInputs;
 
 		string log = "Average Session Time : " + avgSessionTime + "s\n"
 		             + " Total Sessions : " + PlayerPrefs.GetInt ("totalSessions") + "\n"
@@ -112,6 +112,7 @@ public class AnalyticsManager : MonoBehaviour {
 	private void OnInputSoundDetected()
 	{
 		cummulativeAudioInputTime += Time.deltaTime;
+		audioInputTime += Time.deltaTime;
 		if (silenceTime < Time.time - 0.1f) 
 		{
 			totalInputs++;

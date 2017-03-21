@@ -82,7 +82,7 @@ public class AudioDSP : MonoBehaviour {
 	}
 
 	/// <summary>
-	/// Initializes the variables.
+	/// Initialize variables.
 	/// </summary>
 	void InitVariables()
 	{

@@ -112,6 +112,8 @@ public class AudioManager : MonoBehaviour {
 		audioSource.clip = Microphone.Start (null, true, 1, sampleRate);
 		audioSource.Play();
 		audioSource.loop = true;
+		if(recordingStartedEvent != null)
+			recordingStartedEvent ();
 	}
 
 	/// <summary>
@@ -122,6 +124,8 @@ public class AudioManager : MonoBehaviour {
 		Microphone.End (null);
 		audioSource.Stop (); 
 		audioSource.clip = null;
+		if(recordingEndedEvent != null)
+			recordingEndedEvent ();
 	}
 
 	/// <summary>

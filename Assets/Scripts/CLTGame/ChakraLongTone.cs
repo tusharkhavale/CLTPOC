@@ -7,6 +7,9 @@ public class ChakraLongTone : MonoBehaviour {
 
 	private int widthMultiplier = 10;
 	private float interpolant = 0.1f;
+	private float normalizeInterpolant = 0.03f;
+	private float maxYScale = 0.5f;
+	private int dbSignalBoostValue = 80;
 	private static Vector3 defaultScale = new Vector3 (0.1f, 0.1f, 1f);
 	public GameObject noiseCeilingMessage;
 	public Transform [] chakras;
@@ -104,9 +107,9 @@ public class ChakraLongTone : MonoBehaviour {
 		for (int i = 0; i < harmonics.Length; i++) 
 		{
 			// Boost the values
-			harmonics [i] += 80;
+			harmonics [i] += dbSignalBoostValue;
 			// Normalize between 0 to 1 from 0 - 80)
-			harmonics [i] = harmonics [i] / 80 * widthMultiplier;
+			harmonics [i] = harmonics [i] / dbSignalBoostValue * widthMultiplier;
 
 
 			if (harmonics [i] < 0)
@@ -116,7 +119,7 @@ public class ChakraLongTone : MonoBehaviour {
 
 			float lerpX = Mathf.Lerp(chakras[i].localScale.x,intensity,interpolant);
 
-			float lerpY = lerpX < 0.5 ? lerpX : 0.5f;
+			float lerpY = lerpX < maxYScale ? lerpX : maxYScale;
 
 			Vector3 newScale = new Vector3( lerpX, lerpY, chakras[i].localScale.z);
 			chakras [i].localScale = newScale;
@@ -130,7 +133,7 @@ public class ChakraLongTone : MonoBehaviour {
 	{
 		for (int i = 0; i < chakras.Length; i++) 
 		{
-			Vector3 scale = Vector3.Lerp(chakras[i].localScale,defaultScale,(0.03f));
+			Vector3 scale = Vector3.Lerp(chakras[i].localScale,defaultScale,(normalizeInterpolant));
 			chakras [i].localScale = scale;
 		}
 	}
@@ -138,7 +141,7 @@ public class ChakraLongTone : MonoBehaviour {
 	/// <summary>
 	/// Raises the noise calibrated event.
 	/// Start pitch detection
-	/// start harmonics amplitude calculation
+	/// Start harmonics amplitude calculation
 	/// Hide noise calibration message
 	/// </summary>
 	private void OnNoiseCalibrated()
